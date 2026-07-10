@@ -4,7 +4,7 @@
 
 // @namespace hh3d-tool-krizk
 
-// @version 6.0.0
+// @version  6.0.1
 
 // @description Auto HH3D
 
