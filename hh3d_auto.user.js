@@ -985,28 +985,54 @@ class TaskTracker {
         taskIcon: '<i class="fas fa-fire"></i>',
         hasButton: true,
         buttonText: '🔥 Luyện',
-        async action() {
+       async action() {
             try {
+                // 1. Kiểm tra xem người dùng có đang ở trang Luyện Đan Đường hay không
+                if (!window.location.href.includes('/luyen-dan-duong')) {
+                    // Nếu chưa ở trang Luyện Đan, chuyển hướng đến trang Luyện Đan Đường
+                    window.location.href = '/luyen-dan-duong';
+                    return;
+                }
+
+                // 2. Thử tìm nút LUYỆN ĐAN thật trên giao diện web và click
+                const mainBtn = document.querySelector('.btn-luyen-dan, #btn-start-luyen, .luyen-dan-submit, button:contains("LUYỆN ĐAN")');
+                
+                if (mainBtn) {
+                    mainBtn.click();
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'success', title: 'Đã bấm Luyện Đan!', timer: 1500, showConfirmButton: false });
+                    }
+                    return;
+                }
+
+                // 3. Nếu không tìm thấy nút trên UI, gửi Request AJAX trực tiếp lên Server WordPress
+                const formData = new URLSearchParams();
+                formData.append('action', 'hh3d_luyen_dan'); // Tên action AJAX của hệ thống
+                formData.append('pham_dan', 'ha_pham');     // Bắt buộc chọn Hạ Phẩm vì cấp Đan Sĩ chỉ cho phép Hạ Phẩm
+
                 const res = await fetch('/wp-admin/admin-ajax.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                    body: new URLSearchParams({
-                        'action': 'hh3d_luyen_dan',
-                        'tier': '4'
-                    })
+                    body: formData
                 });
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'success', title: 'Luyện Đan thành công!', timer: 1500, showConfirmButton: false });
+
+                const data = await res.json();
+
+                if (data.success || data.ok) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'success', title: data.message || 'Luyện Đan thành công!', timer: 1500, showConfirmButton: false });
+                    } else {
+                        alert('Luyện Đan thành công!');
+                    }
+                    // F5 lại trang để cập nhật lò luyện
+                    setTimeout(() => location.reload(), 1000);
                 } else {
-                    alert('Luyện Đan thành công!');
+                    Swal.fire({ icon: 'warning', title: 'Chưa thể Luyện', text: data.message || data.msg || 'Thiếu linh dược hoặc lò đang bận!' });
                 }
             } catch (e) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'error', title: 'Thất bại!', text: e.message });
-                } else {
-                    alert('Lỗi: ' + e.message);
-                }
+                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Vui lòng mở trang Luyện Đan Đường để thực hiện!' });
             }
+        }
         }
     },
         {
