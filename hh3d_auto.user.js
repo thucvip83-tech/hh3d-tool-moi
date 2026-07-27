@@ -986,13 +986,13 @@ class TaskTracker {
         hasButton: true,
         buttonText: '🔥 Luyện',
         async action() {
-            // 1. Nếu chưa ở trang Luyện Đan Đường thì tự động chuyển trang
+            // 1. Chuyển sang trang Luyện Đan Đường nếu chưa đứng đúng trang
             if (!window.location.href.includes('/luyen-dan-duong')) {
                 window.location.href = '/luyen-dan-duong';
                 return;
             }
 
-            // 2. Tìm nút Luyện Đan thật trên giao diện web Luyện Đan Đường để click
+            // 2. Tìm nút LUYỆN ĐAN thật trên giao diện web để bấm
             const btn = document.querySelector('button.btn-luyen-dan, #btn-start-luyen') || 
                         Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('LUYỆN ĐAN'));
 
@@ -1000,9 +1000,9 @@ class TaskTracker {
                 btn.click();
             } else {
                 if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'info', title: 'Thông báo', text: 'Vui lòng chọn công thức và kiểm tra linh dược trong lò!' });
+                    Swal.fire({ icon: 'info', title: 'Thông báo', text: 'Vui lòng kiểm tra linh dược và chọn công thức trong lò!' });
                 } else {
-                    alert('Vui lòng chọn công thức và kiểm tra linh dược trong lò!');
+                    alert('Vui lòng kiểm tra linh dược và chọn công thức trong lò!');
                 }
             }
         }
