@@ -11427,6 +11427,29 @@ app.post("/api/ld-run-mua", async (req, res) => {
   broadcast({ type: "ld_done" })
 })
 
+<!-- Hàng Luyện Đan mới -->
+<div class="hh3d-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 6px 10px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <span style="font-size: 16px;">🔥</span>
+    <span style="color: #fff; font-weight: 500;">Luyện Đan</span>
+  </div>
+  
+  <div style="display: flex; gap: 6px;">
+    <!-- Chọn Bậc/Phẩm Đan -->
+    <select id="ld-tier-select" style="background: #2a2a3c; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 4px 6px; font-size: 12px; outline: none;">
+      <option value="1">Bậc 1</option>
+      <option value="2">Bậc 2</option>
+      <option value="3">Bậc 3</option>
+      <option value="4" selected>Bậc 4</option>
+      <option value="5">Bậc 5</option>
+    </select>
+    
+    <!-- Nút Nấu/Luyện -->
+    <button id="btn-luyen-dan" style="background: linear-gradient(135deg, #6e8efb, #a777e3); color: #fff; border: none; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s;">
+      🔥 Luyện
+    </button>
+  </div>
+</div>
 // 7. Chức năng 2: Khởi động Vòng lặp Luyện Đan
 app.post("/api/ld-run-luyen", async (req, res) => {
   const { profileIds, profileDelaySec, luyenDanConcurrency, luyenDanBatchStaggerMs, stopMin } = req.body
