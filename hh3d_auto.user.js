@@ -979,7 +979,36 @@ class TaskTracker {
             taskName: 'Mua Đan Dược',
             taskIcon: '<i class="fas fa-flask"></i>',
             hasCustomControls: true,
-        },
+        },{
+        taskId: 'luyendan',
+        taskName: 'Luyện Đan',
+        taskIcon: '<i class="fas fa-fire"></i>',
+        hasButton: true,
+        buttonText: '🔥 Luyện',
+        async action() {
+            try {
+                const res = await fetch('/wp-admin/admin-ajax.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                    body: new URLSearchParams({
+                        'action': 'hh3d_luyen_dan',
+                        'tier': '4'
+                    })
+                });
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'success', title: 'Luyện Đan thành công!', timer: 1500, showConfirmButton: false });
+                } else {
+                    alert('Luyện Đan thành công!');
+                }
+            } catch (e) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'error', title: 'Thất bại!', text: e.message });
+                } else {
+                    alert('Lỗi: ' + e.message);
+                }
+            }
+        }
+    },
         {
             taskId: 'hoatdongngay',
             taskName: 'Hoạt Động Ngày - Vòng Quay',
