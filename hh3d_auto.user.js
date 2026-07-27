@@ -975,16 +975,29 @@ class TaskTracker {
             }
         },
         {
-            taskId: 'muadan',
-            taskName: 'Mua Đan Dược',
-            taskIcon: '<i class="fas fa-flask"></i>',
-            hasCustomControls: true,
-        },{
         taskId: 'luyendan',
         taskName: 'Luyện Đan',
         taskIcon: '<i class="fas fa-fire"></i>',
         hasButton: true,
         buttonText: '🔥 Luyện',
+        async action() {
+            // Kiểm tra trang
+            if (!window.location.pathname.includes('luyen-dan-duong')) {
+                window.location.href = '/luyen-dan-duong';
+                return;
+            }
+
+            // Click nút Luyện Đan
+            const btn = document.querySelector('button.btn-luyen-dan, #btn-start-luyen') || 
+                        Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('LUYỆN ĐAN'));
+
+            if (btn) {
+                btn.click();
+            } else {
+                alert('Vui lòng chọn công thức và kiểm tra linh dược trong lò!');
+            }
+        }
+    },
         async action() {
             // 1. Nếu chưa ở trang Luyện Đan Đường thì chuyển tới trang đó
             if (!window.location.href.includes('/luyen-dan-duong')) {
