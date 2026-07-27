@@ -985,25 +985,28 @@ class TaskTracker {
         taskIcon: '<i class="fas fa-fire"></i>',
         hasButton: true,
         buttonText: '🔥 Luyện',
-       async action() {
-            try {
-                // 1. Kiểm tra xem người dùng có đang ở trang Luyện Đan Đường hay không
-                if (!window.location.href.includes('/luyen-dan-duong')) {
-                    // Nếu chưa ở trang Luyện Đan, chuyển hướng đến trang Luyện Đan Đường
-                    window.location.href = '/luyen-dan-duong';
-                    return;
-                }
+        async action() {
+            // 1. Nếu chưa ở trang Luyện Đan Đường thì tự động chuyển trang
+            if (!window.location.href.includes('/luyen-dan-duong')) {
+                window.location.href = '/luyen-dan-duong';
+                return;
+            }
 
-                // 2. Thử tìm nút LUYỆN ĐAN thật trên giao diện web và click
-                const mainBtn = document.querySelector('.btn-luyen-dan, #btn-start-luyen, .luyen-dan-submit, button:contains("LUYỆN ĐAN")');
-                
-                if (mainBtn) {
-                    mainBtn.click();
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'success', title: 'Đã bấm Luyện Đan!', timer: 1500, showConfirmButton: false });
-                    }
-                    return;
+            // 2. Tìm nút Luyện Đan thật trên giao diện web Luyện Đan Đường để click
+            const btn = document.querySelector('button.btn-luyen-dan, #btn-start-luyen') || 
+                        Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('LUYỆN ĐAN'));
+
+            if (btn) {
+                btn.click();
+            } else {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'info', title: 'Thông báo', text: 'Vui lòng chọn công thức và kiểm tra linh dược trong lò!' });
+                } else {
+                    alert('Vui lòng chọn công thức và kiểm tra linh dược trong lò!');
                 }
+            }
+        }
+    },
 
                 // 3. Nếu không tìm thấy nút trên UI, gửi Request AJAX trực tiếp lên Server WordPress
                 const formData = new URLSearchParams();
