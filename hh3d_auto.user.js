@@ -1,16 +1,16 @@
     // ==UserScript==
-    // @name          HH3D Auto - Edited by Gia Chu
-    // @namespace     hh3d-tool-krizk
+    // @name          HH3D Auto - Edited by VM
+    // @namespace     hh3d-tool-VM
     // @version       5.9.9
     // @description   Auto  HH3D
-    // @author        Cre: [Unknown] - Edited by Gia Chu
+    // @author        Cre: [Unknown] - Edited by VM
     // @include       *://hoathinh3d.am*/*
     // @exclude       *://hoathinh3d.am/khoang-mach*
     // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
-    // @run-at        document-idle
+    // @run-at        document-start
     // @grant         unsafeWindow
     // @connect       raw.githubusercontent.com
-    // @icon          🥹
+    // @icon          😂
 
     // ==/UserScript==
     (async function() {
@@ -974,8 +974,12 @@ class TaskTracker {
                 await khactran.summoningPhapTuong();
             }
         },
-        
-    },
+        {
+            taskId: 'muadan',
+            taskName: 'Mua Đan Dược',
+            taskIcon: '<i class="fas fa-flask"></i>',
+            hasCustomControls: true,
+        },
         {
             taskId: 'hoatdongngay',
             taskName: 'Hoạt Động Ngày - Vòng Quay',
@@ -11267,3 +11271,4 @@ class HoatDongNgay {
             hienTuviKM.startUp();
         }
 })();
+d
