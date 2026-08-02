@@ -4,8 +4,8 @@
     // @version       5.9.9
     // @description   Auto  HH3D
     // @author        Cre: [Unknown] - Edited by Gia Chu
-    // @include       *://hoathinh3d.st*/*
-    // @exclude       *://hoathinh3d.st/khoang-mach*
+    // @include       *://hoathinh3d.am*/*
+    // @exclude       *://hoathinh3d.am/khoang-mach*
     // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
     // @run-at        document-idle
     // @grant         unsafeWindow
@@ -43,10 +43,10 @@
         //   securityToken: '...',
         //   tokenType: 'normal',
         //   pageId: '622123',
-        //   adminAjax: 'https://hoathinh3d.st/wp-admin/admin-ajax.php',
-        //   themeAjax: 'https://hoathinh3d.st/wp-content/themes/halimmovies-child/hh3d-ajax.php',
-        //   restAction: 'https://hoathinh3d.st/wp-json/hh3d/v1/action',
-        //   restBase: 'https://hoathinh3d.st/wp-json',
+        //   adminAjax: 'https://hoathinh3d.am/wp-admin/admin-ajax.php',
+        //   themeAjax: 'https://hoathinh3d.am/wp-content/themes/halimmovies-child/hh3d-ajax.php',
+        //   restAction: 'https://hoathinh3d.am/wp-json/hh3d/v1/action',
+        //   restBase: 'https://hoathinh3d.am/wp-json',
         //   restNonce: 'b756294d06',
         //   act: {
             //   tltmOpen: '1354a8a1',
@@ -974,82 +974,7 @@ class TaskTracker {
                 await khactran.summoningPhapTuong();
             }
         },
-        {
-        taskId: 'luyendan',
-        taskName: 'Luyện Đan',
-        taskIcon: '<i class="fas fa-fire"></i>',
-        hasButton: true,
-        buttonText: '🔥 Luyện',
-        async action() {
-            // Kiểm tra trang
-            if (!window.location.pathname.includes('luyen-dan-duong')) {
-                window.location.href = '/luyen-dan-duong';
-                return;
-            }
-
-            // Click nút Luyện Đan
-            const btn = document.querySelector('button.btn-luyen-dan, #btn-start-luyen') || 
-                        Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('LUYỆN ĐAN'));
-
-            if (btn) {
-                btn.click();
-            } else {
-                alert('Vui lòng chọn công thức và kiểm tra linh dược trong lò!');
-            }
-        }
-    },
-        async action() {
-            // 1. Nếu chưa ở trang Luyện Đan Đường thì chuyển tới trang đó
-            if (!window.location.href.includes('/luyen-dan-duong')) {
-                window.location.href = '/luyen-dan-duong';
-                return;
-            }
-
-            // 2. Tìm nút LUYỆN ĐAN thật trên trang web để bấm
-            const btn = document.querySelector('button.btn-luyen-dan, #btn-start-luyen') || 
-                        Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('LUYỆN ĐAN'));
-
-            if (btn) {
-                btn.click();
-            } else {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'info', title: 'Thông báo', text: 'Vui lòng chọn công thức và kiểm tra linh dược trong lò!' });
-                } else {
-                    alert('Vui lòng chọn công thức và kiểm tra linh dược trong lò!');
-                }
-            }
-        }
-    },
-
-                // 3. Nếu không tìm thấy nút trên UI, gửi Request AJAX trực tiếp lên Server WordPress
-                const formData = new URLSearchParams();
-                formData.append('action', 'hh3d_luyen_dan'); // Tên action AJAX của hệ thống
-                formData.append('pham_dan', 'ha_pham');     // Bắt buộc chọn Hạ Phẩm vì cấp Đan Sĩ chỉ cho phép Hạ Phẩm
-
-                const res = await fetch('/wp-admin/admin-ajax.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                    body: formData
-                });
-
-                const data = await res.json();
-
-                if (data.success || data.ok) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'success', title: data.message || 'Luyện Đan thành công!', timer: 1500, showConfirmButton: false });
-                    } else {
-                        alert('Luyện Đan thành công!');
-                    }
-                    // F5 lại trang để cập nhật lò luyện
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    Swal.fire({ icon: 'warning', title: 'Chưa thể Luyện', text: data.message || data.msg || 'Thiếu linh dược hoặc lò đang bận!' });
-                }
-            } catch (e) {
-                Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Vui lòng mở trang Luyện Đan Đường để thực hiện!' });
-            }
-        }
-        }
+        
     },
         {
             taskId: 'hoatdongngay',
