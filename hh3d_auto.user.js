@@ -4,8 +4,8 @@
     // @version       5.9.9
     // @description   Auto  HH3D
     // @author        Cre: [Unknown] - Edited by VM
-    // @include       *://hoathinh3d.am*/*
-    // @exclude       *://hoathinh3d.am/khoang-mach*
+    // @include       *://hoathinh3d.one*/*
+    // @exclude       *://hoathinh3d.one/khoang-mach*
     // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
     // @run-at        document-start
     // @grant         unsafeWindow
@@ -43,10 +43,10 @@
         //   securityToken: '...',
         //   tokenType: 'normal',
         //   pageId: '622123',
-        //   adminAjax: 'https://hoathinh3d.am/wp-admin/admin-ajax.php',
-        //   themeAjax: 'https://hoathinh3d.am/wp-content/themes/halimmovies-child/hh3d-ajax.php',
-        //   restAction: 'https://hoathinh3d.am/wp-json/hh3d/v1/action',
-        //   restBase: 'https://hoathinh3d.am/wp-json',
+        //   adminAjax: 'https://hoathinh3d.one/wp-admin/admin-ajax.php',
+        //   themeAjax: 'https://hoathinh3d.one/wp-content/themes/halimmovies-child/hh3d-ajax.php',
+        //   restAction: 'https://hoathinh3d.one/wp-json/hh3d/v1/action',
+        //   restBase: 'https://hoathinh3d.one/wp-json',
         //   restNonce: 'b756294d06',
         //   act: {
             //   tltmOpen: '1354a8a1',
