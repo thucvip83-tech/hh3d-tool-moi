@@ -4,8 +4,8 @@
     // @version       5.9.9
     // @description   Auto  HH3D
     // @author        Cre: [Unknown] - Edited by VM
-    // @include       *://hoathinh3d.one*/*
-    // @exclude       *://hoathinh3d.one/khoang-mach*
+    // @include       *://hoathinh3d.so*/*
+    // @exclude       *://hoathinh3d.so/khoang-mach*
     // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
     // @run-at        document-start
     // @grant         unsafeWindow
