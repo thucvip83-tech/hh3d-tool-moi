@@ -11279,13 +11279,21 @@ class HoatDongNgay {
         if (location.pathname.includes("khoang-mach") || location.href.includes("khoang-mach")) {            
             hienTuviKM.startUp();
         } 
-// ==================== KHỐI TỰ ĐỘNG CLICK MUA THẬT ====================
+// ==================== KHỐI TỰ ĐỘNG CLICK MUA & XÁC NHẬN POPUP ====================
     async function triggerNativeBuy(itemValue) {
+        // Nếu không ở trang Tụ Bảo Các, tự động chuyển hướng người dùng
+        if (!window.location.href.includes('tu-bao-cac-hh3d')) {
+            if (confirm('Bạn cần ở trang Tụ Bảo Các mới mua được. Bấm OK để chuyển trang ngay!')) {
+                window.location.href = 'https://hoathinh3d.im/tu-bao-cac-hh3d/?tab=dan-cac#xuat-linh-duoc';
+            }
+            return;
+        }
+
         const findAndClickBtn = async (itemName) => {
             const cards = Array.from(document.querySelectorAll('div, section, article, .card'));
             for (const card of cards) {
                 if (card.children.length > 0 && card.innerText && card.innerText.includes(itemName)) {
-                    // Tìm tất cả nút bấm có thể click mua
+                    // Tìm nút Mua trong ô vật phẩm
                     const buttons = Array.from(card.querySelectorAll('button, a'));
                     const buyBtn = buttons.find(btn => {
                         const text = btn.textContent.trim().toLowerCase();
@@ -11294,14 +11302,21 @@ class HoatDongNgay {
 
                     if (buyBtn) {
                         buyBtn.click();
-                        await new Promise(r => setTimeout(r, 400));
                         
-                        // Tự động bấm nút "Xác nhận" nếu web hiện popup hỏi lại
-                        const confirmBtn = Array.from(document.querySelectorAll('button, div')).find(el => {
+                        // Chờ Popup hiện ra
+                        await new Promise(r => setTimeout(r, 500));
+                        
+                        // Tìm và bấm nút "✓ Xác nhận mua" hoặc nút xác nhận bất kỳ trên Popup
+                        const confirmBtns = Array.from(document.querySelectorAll('button, div, span'));
+                        const confirmBtn = confirmBtns.find(el => {
                             const t = el.textContent.trim().toLowerCase();
-                            return t === 'xác nhận' || t === 'đồng ý' || t === 'ok';
+                            return t.includes('xác nhận mua') || t === 'xác nhận' || t === 'đồng ý';
                         });
-                        if (confirmBtn) confirmBtn.click();
+
+                        if (confirmBtn) {
+                            confirmBtn.click();
+                            await new Promise(r => setTimeout(r, 600));
+                        }
                         
                         return true;
                     }
@@ -11330,7 +11345,7 @@ class HoatDongNgay {
                 const clicked = await findAndClickBtn(name);
                 if (clicked) count++;
             }
-            alert(`Đã thực hiện mua ${count} món còn lượt mua!`);
+            alert(`Đã hoàn tất mua ${count} món còn lượt!`);
             return;
         }
 
@@ -11341,7 +11356,7 @@ class HoatDongNgay {
                 const clicked = await findAndClickBtn(name);
                 if (clicked) count++;
             }
-            alert(`Đã thực hiện mua ${count} gói túi còn lượt!`);
+            alert(`Đã hoàn tất mua ${count} gói còn lượt!`);
             return;
         }
 
@@ -11349,7 +11364,7 @@ class HoatDongNgay {
         if (targetName) {
             const success = await findAndClickBtn(targetName);
             if (!success) {
-                alert(`Vật phẩm "${targetName}" hiện đang HẾT LƯỢT MUA hoặc CHƯA MỞ BÁN!`);
+                alert(`Vật phẩm "${targetName}" hiện đã HẾT LƯỢT MUA, CHƯA MỞ BÁN hoặc không tìm thấy trên màn hình!`);
             }
         }
     }
