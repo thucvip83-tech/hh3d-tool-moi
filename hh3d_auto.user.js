@@ -11279,23 +11279,20 @@ class HoatDongNgay {
         if (location.pathname.includes("khoang-mach") || location.href.includes("khoang-mach")) {            
             hienTuviKM.startUp();
         } 
-// ==================== PANEL MUA LINH DƯỢC ĐỘC LẬP ====================
-    class AutoMuaLinhDuoc {
-        constructor() {
-            this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
-        }
+// ==================== PANEL MUA LINH DƯỢC GÓC DƯỚI BÊN PHẢI ====================
+    async function executeBuyLinhDuoc(itemValue) {
+        const token = window.hh3dData?.securityToken || 
+                      window.hh3dData?.security_token || 
+                      window.securityToken || 
+                      (window.hh3dAutoConfig && window.hh3dAutoConfig.securityToken) || 
+                      '';
 
-        getSecurityToken() {
-            return window.hh3dData?.securityToken || 
-                   window.hh3dData?.security_token || 
-                   window.securityToken || 
-                   '';
-        }
+        const baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
+        const nonce = window.hh3dData?.restNonce || window.wpApiSettings?.nonce || '';
 
-        async callApi(endpoint, payload = {}) {
-            const nonce = window.hh3dData?.restNonce || window.wpApiSettings?.nonce || '';
+        const sendPost = async (endpoint, payload) => {
             try {
-                const res = await fetch(this.baseUrl + endpoint, {
+                const res = await fetch(baseUrl + endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -11305,46 +11302,50 @@ class HoatDongNgay {
                 });
                 return await res.json();
             } catch (err) {
-                console.error(`[Mua Dược API Lỗi] ${endpoint}:`, err);
+                console.error(`[Lỗi API ${endpoint}]`, err);
                 return null;
             }
+        };
+
+        if (itemValue === 'all_retail') {
+            const elements = ['kim', 'moc', 'thuy', 'hoa', 'tho', 'linh-phong-thao'];
+            for (const elem of elements) {
+                await sendPost('buy-retail', { element: elem, qty: 1, security_token: token });
+                await new Promise(r => setTimeout(r, 200));
+            }
+            alert('Đã gửi xong lệnh mua Tất Cả Dược Lẻ!');
+            return;
         }
 
-        async buyItem(itemValue) {
-            const token = this.getSecurityToken();
-
-            if (itemValue === 'all_retail') {
-                const elements = ['kim', 'moc', 'thuy', 'hoa', 'tho', 'linh-phong-thao'];
-                for (const elem of elements) {
-                    await this.callApi('buy-retail', { element: elem, qty: 1, security_token: token });
-                    await new Promise(r => setTimeout(r, 300));
-                }
-                alert('Đã mua xong tất cả Linh Dược lẻ!');
-                return;
+        if (itemValue === 'all_bundles') {
+            const bundleKeys = ['bundle_ld_tho', 'bundle_ld_s', 'bundle_ld_m', 'bundle_ld_l'];
+            for (const key of bundleKeys) {
+                await sendPost('buy-bundle', { bundle_key: key, security_token: token });
+                await new Promise(r => setTimeout(r, 200));
             }
+            alert('Đã gửi xong lệnh mua Tất Cả Gói!');
+            return;
+        }
 
-            if (itemValue === 'all_bundles') {
-                const bundleKeys = ['bundle_ld_tho', 'bundle_ld_s', 'bundle_ld_m', 'bundle_ld_l'];
-                for (const key of bundleKeys) {
-                    await this.callApi('buy-bundle', { bundle_key: key, security_token: token });
-                    await new Promise(r => setTimeout(r, 300));
-                }
-                alert('Đã mua xong tất cả Gói Túi!');
-                return;
+        let res;
+        if (itemValue.startsWith('bundle_')) {
+            res = await sendPost('buy-bundle', { bundle_key: itemValue, security_token: token });
+        } else {
+            res = await sendPost('buy-retail', { element: itemValue, qty: 1, security_token: token });
+        }
+
+        if (res) {
+            if (res.message || res.msg) {
+                alert(`Kết quả: ${res.message || res.msg}`);
+            } else if (res.success || res.status === 'success') {
+                alert('Mua thành công!');
+            } else {
+                alert('Đã gửi yêu cầu mua!');
             }
-
-            if (itemValue.startsWith('bundle_')) {
-                const res = await this.callApi('buy-bundle', { bundle_key: itemValue, security_token: token });
-                if (res && (res.success || res.status === 'success')) alert('Mua gói thành công!');
-                return;
-            }
-
-            const res = await this.callApi('buy-retail', { element: itemValue, qty: 1, security_token: token });
-            if (res && (res.success || res.status === 'success')) alert(`Mua thành công 1x ${itemValue}!`);
+        } else {
+            alert('Không nhận được phản hồi API. Mở F12 kiểm tra tab Console.');
         }
     }
-
-    const autoLinhDuocGlobal = new AutoMuaLinhDuoc();
 
     function createFloatingPanel() {
         if (document.getElementById('floating-linh-duoc-panel')) return;
@@ -11353,14 +11354,16 @@ class HoatDongNgay {
         panel.id = 'floating-linh-duoc-panel';
         panel.style.cssText = `
             position: fixed !important;
-            bottom: 20px !important;
-            right: 20px !important;
-            z-index: 999999 !important;
-            background: #1a1a1d !important;
-            border: 2px solid #6f42c1 !important;
+            bottom: 30px !important;
+            right: 30px !important;
+            top: auto !important;
+            left: auto !important;
+            z-index: 9999999 !important;
+            background: #111113 !important;
+            border: 2px solid #8a2be2 !important;
             border-radius: 8px !important;
             padding: 10px 14px !important;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8) !important;
             display: flex !important;
             align-items: center !important;
             gap: 8px !important;
@@ -11390,7 +11393,7 @@ class HoatDongNgay {
                     <option value="bundle_ld_l">Túi Linh Dược Đại</option>
                 </optgroup>
             </select>
-            <button id="float-btn-buy" style="background: #6f42c1; color: #fff; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Mua Ngay</button>
+            <button id="float-btn-buy" style="background: #8a2be2; color: #fff; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Mua Ngay</button>
         `;
 
         document.body.appendChild(panel);
@@ -11398,17 +11401,21 @@ class HoatDongNgay {
         document.getElementById('float-btn-buy').addEventListener('click', async () => {
             const selectEl = document.getElementById('float-select-duoc');
             const btn = document.getElementById('float-btn-buy');
+            
             btn.textContent = '...';
-            btn.style.opacity = '0.6';
+            btn.disabled = true;
 
-            await autoLinhDuocGlobal.buyItem(selectEl.value);
-
-            btn.textContent = 'Mua Ngay';
-            btn.style.opacity = '1';
+            try {
+                await executeBuyLinhDuoc(selectEl.value);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                btn.textContent = 'Mua Ngay';
+                btn.disabled = false;
+            }
         });
     }
 
-    // Chạy khi trang web load xong
     if (document.readyState === 'complete') {
         createFloatingPanel();
     } else {
