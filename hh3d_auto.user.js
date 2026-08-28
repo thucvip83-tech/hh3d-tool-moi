@@ -11279,71 +11279,66 @@ class HoatDongNgay {
         if (location.pathname.includes("khoang-mach") || location.href.includes("khoang-mach")) {            
             hienTuviKM.startUp();
         } 
-// ==================== PANEL MUA LINH DƯỢC GÓC DƯỚI BÊN PHẢI ====================
-    async function executeBuyLinhDuoc(itemValue) {
-        const token = window.hh3dData?.securityToken || 
-                      window.hh3dData?.security_token || 
-                      window.securityToken || 
-                      (window.hh3dAutoConfig && window.hh3dAutoConfig.securityToken) || 
-                      '';
-
-        const baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
-        const nonce = window.hh3dData?.restNonce || window.wpApiSettings?.nonce || '';
-
-        const sendPost = async (endpoint, payload) => {
-            try {
-                const res = await fetch(baseUrl + endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': nonce
-                    },
-                    body: JSON.stringify(payload)
-                });
-                return await res.json();
-            } catch (err) {
-                console.error(`[Lỗi API ${endpoint}]`, err);
-                return null;
+// ==================== KHỐI TỰ ĐỘNG CLICK MUA LINH DƯỢC ====================
+    async function triggerNativeBuy(itemValue) {
+        // Hàm tìm nút Mua dựa vào tên hiển thị trong khung
+        const findAndClickBtn = async (itemName) => {
+            const cards = Array.from(document.querySelectorAll('div, section, article'));
+            for (const card of cards) {
+                if (card.children.length > 0 && card.innerText && card.innerText.includes(itemName)) {
+                    const buyBtn = Array.from(card.querySelectorAll('button')).find(btn => btn.textContent.trim() === 'Mua');
+                    if (buyBtn && !buyBtn.disabled) {
+                        buyBtn.click();
+                        return true;
+                    }
+                }
             }
+            return false;
+        };
+
+        const itemMap = {
+            'kim': 'Linh Dược Kim',
+            'moc': 'Linh Dược Mộc',
+            'thuy': 'Linh Dược Thủy',
+            'hoa': 'Linh Dược Hỏa',
+            'tho': 'Linh Dược Thổ',
+            'linh-phong-thao': 'Linh Phong Thảo',
+            'bundle_ld_tho': 'Túi Linh Dược Thổ',
+            'bundle_ld_s': 'Túi Linh Dược Tiểu',
+            'bundle_ld_m': 'Túi Linh Dược Trung',
+            'bundle_ld_l': 'Túi Linh Dược Đại'
         };
 
         if (itemValue === 'all_retail') {
-            const elements = ['kim', 'moc', 'thuy', 'hoa', 'tho', 'linh-phong-thao'];
-            for (const elem of elements) {
-                await sendPost('buy-retail', { element: elem, qty: 1, security_token: token });
-                await new Promise(r => setTimeout(r, 200));
+            const retailList = ['Linh Dược Kim', 'Linh Dược Mộc', 'Linh Dược Thủy', 'Linh Dược Hỏa', 'Linh Dược Thổ', 'Linh Phong Thảo'];
+            let count = 0;
+            for (const name of retailList) {
+                const clicked = await findAndClickBtn(name);
+                if (clicked) count++;
+                await new Promise(r => setTimeout(r, 600));
             }
-            alert('Đã gửi xong lệnh mua Tất Cả Dược Lẻ!');
+            alert(`Đã kích hoạt mua ${count} món dược lẻ!`);
             return;
         }
 
         if (itemValue === 'all_bundles') {
-            const bundleKeys = ['bundle_ld_tho', 'bundle_ld_s', 'bundle_ld_m', 'bundle_ld_l'];
-            for (const key of bundleKeys) {
-                await sendPost('buy-bundle', { bundle_key: key, security_token: token });
-                await new Promise(r => setTimeout(r, 200));
+            const bundleList = ['Túi Linh Dược Thổ', 'Túi Linh Dược Tiểu', 'Túi Linh Dược Trung', 'Túi Linh Dược Đại'];
+            let count = 0;
+            for (const name of bundleList) {
+                const clicked = await findAndClickBtn(name);
+                if (clicked) count++;
+                await new Promise(r => setTimeout(r, 600));
             }
-            alert('Đã gửi xong lệnh mua Tất Cả Gói!');
+            alert(`Đã kích hoạt mua ${count} gói túi!`);
             return;
         }
 
-        let res;
-        if (itemValue.startsWith('bundle_')) {
-            res = await sendPost('buy-bundle', { bundle_key: itemValue, security_token: token });
-        } else {
-            res = await sendPost('buy-retail', { element: itemValue, qty: 1, security_token: token });
-        }
-
-        if (res) {
-            if (res.message || res.msg) {
-                alert(`Kết quả: ${res.message || res.msg}`);
-            } else if (res.success || res.status === 'success') {
-                alert('Mua thành công!');
-            } else {
-                alert('Đã gửi yêu cầu mua!');
+        const targetName = itemMap[itemValue];
+        if (targetName) {
+            const success = await findAndClickBtn(targetName);
+            if (!success) {
+                alert(`Không tìm thấy nút Mua cho "${targetName}" (có thể đã hết lượt hoặc chưa mở bán)!`);
             }
-        } else {
-            alert('Không nhận được phản hồi API. Mở F12 kiểm tra tab Console.');
         }
     }
 
@@ -11356,8 +11351,6 @@ class HoatDongNgay {
             position: fixed !important;
             bottom: 30px !important;
             right: 30px !important;
-            top: auto !important;
-            left: auto !important;
             z-index: 9999999 !important;
             background: #111113 !important;
             border: 2px solid #8a2be2 !important;
@@ -11381,7 +11374,7 @@ class HoatDongNgay {
                 <optgroup label="-- Nguyên Liệu Lẻ --">
                     <option value="kim">Kim Linh Quả</option>
                     <option value="moc" selected>Mộc Linh Quả</option>
-                    <option value="thuy">Thủy Linh Quả</option>
+                    <option value="thuy">Thủy Linh Quủy</option>
                     <option value="hoa">Hỏa Linh Quả</option>
                     <option value="tho">Thổ Linh Quả</option>
                     <option value="linh-phong-thao">Linh Phong Thảo</option>
@@ -11406,7 +11399,7 @@ class HoatDongNgay {
             btn.disabled = true;
 
             try {
-                await executeBuyLinhDuoc(selectEl.value);
+                await triggerNativeBuy(selectEl.value);
             } catch (err) {
                 console.error(err);
             } finally {
