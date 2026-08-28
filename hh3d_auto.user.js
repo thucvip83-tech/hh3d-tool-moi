@@ -11280,7 +11280,7 @@ class HoatDongNgay {
             hienTuviKM.startUp();
         }
 })();
-d
+
 // ==================== MODULE MUA LINH DƯỢC (CHÈN TRỰC TIẾP KHUNG KRIZK) ====================
 class AutoMuaLinhDuoc {
     constructor() {
