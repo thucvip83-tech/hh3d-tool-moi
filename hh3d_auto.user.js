@@ -11279,7 +11279,7 @@ class HoatDongNgay {
         if (location.pathname.includes("khoang-mach") || location.href.includes("khoang-mach")) {            
             hienTuviKM.startUp();
         } 
-      // ==================== HOOK TRỰC TIẾP MENU KRIZK ====================
+ // ==================== HOOK TRỰC TIẾP KHUNG KRIZK (KHÔNG PHỤ THUỘC DOM) ====================
     class AutoMuaLinhDuoc {
         constructor() {
             this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
@@ -11346,29 +11346,22 @@ class HoatDongNgay {
 
     const autoLinhDuocInstance = new AutoMuaLinhDuoc();
 
-    function attachLinhDuocToUI() {
+    // ==================== ÉP CHÈN BẰNG CONTAINER GỐC ====================
+    function forceInjectLinhDuoc() {
         if (document.getElementById('row-mua-linh-duoc-select')) return;
 
-        // 1. Tìm chính xác phần tử chứa nút "Tông" hoặc "Tụ Bảo" trong hàng Mua Đan Dược
-        const allBtns = Array.from(document.querySelectorAll('button, div, span'));
-        const targetAnchor = allBtns.find(el => el.textContent.trim() === 'Tông' || el.textContent.trim() === 'Tụ Bảo');
+        // Quét lấy tất cả các khung chứa danh sách trên màn hình
+        const containers = Array.from(document.querySelectorAll('div')).filter(el => {
+            return el.children.length >= 8 && Array.from(el.children).some(child => child.textContent.includes('Đố Thạch') || child.textContent.includes('Bí Cảnh'));
+        });
 
-        if (!targetAnchor) return;
+        if (containers.length === 0) return;
 
-        // 2. Đi ngược lên để lấy đúng thẻ bọc toàn bộ hàng (Row Container)
-        let rowContainer = targetAnchor;
-        while (rowContainer && rowContainer.parentElement) {
-            if (rowContainer.parentElement.children.length > 5 || rowContainer.parentElement.tagName === 'BODY') break;
-            rowContainer = rowContainer.parentElement;
-        }
+        const mainContainer = containers[0];
 
-        if (!rowContainer || !rowContainer.parentElement) return;
-
-        // 3. Tạo HTML dòng Mua Linh Dược chuẩn giao diện
         const div = document.createElement('div');
         div.id = 'row-mua-linh-duoc-select';
-        div.className = rowContainer.className || '';
-        div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin-top: 5px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;';
+        div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin-top: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; width: 100%; box-sizing: border-box;';
         
         div.innerHTML = `
             <div style="display: flex; align-items: center; gap: 6px;">
@@ -11400,8 +11393,8 @@ class HoatDongNgay {
             </div>
         `;
 
-        // Chèn ngay bên dưới hàng Mua Đan Dược
-        rowContainer.insertAdjacentElement('afterend', div);
+        // Thêm trực tiếp vào cuối danh sách menu
+        mainContainer.appendChild(div);
 
         document.getElementById('btn-exec-buy-duoc').addEventListener('click', async () => {
             const selectEl = document.getElementById('select-linh-duoc-opt');
@@ -11416,5 +11409,5 @@ class HoatDongNgay {
         });
     }
 
-    setInterval(attachLinhDuocToUI, 1000);
+    setInterval(forceInjectLinhDuoc, 800);
 })();
