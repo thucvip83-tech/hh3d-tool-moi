@@ -11343,9 +11343,6 @@ class HoatDongNgay {
             if (res && (res.success || res.status === 'success')) alert(`Mua thành công 1x ${itemValue}!`);
         }
     }
-
-    const autoLinhDuoc = new AutoMuaLinhDuoc();
-
     // ==================== TẠO UI BÁM THEO CẤU TRÚC KRIZK ====================
     function renderLinhDuocRow() {
         if (document.getElementById('row-mua-linh-duoc-select')) return;
