@@ -11280,8 +11280,7 @@ class HoatDongNgay {
             hienTuviKM.startUp();
         }
 })();
-
-// ==================== MODULE MUA LINH DƯỢC (CHÈN TRỰC TIẾP KHUNG KRIZK) ====================
+// ==================== MODULE MUA LINH DƯỢC ====================
 class AutoMuaLinhDuoc {
     constructor() {
         this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
@@ -11348,35 +11347,28 @@ class AutoMuaLinhDuoc {
 
 window.autoMuaLinhDuoc = new AutoMuaLinhDuoc();
 
-// ==================== HÀM RENDER MENU CHẮC CHẮN HIỂN THỊ ====================
-function forceRenderLinhDuocMenu() {
+// ==================== TẠO UI KHU VỰC MENU ====================
+function renderLinhDuocMenuUI() {
     if (document.getElementById('row-mua-linh-duoc-select')) return;
 
-    // Tìm tất cả các phần tử chứa text "Mua Đan Dược" hoặc "Hoạt Động Ngày"
-    const elements = Array.from(document.querySelectorAll('*'));
-    const targetElement = elements.reverse().find(el => 
-        el.children.length === 0 && (
-            el.textContent.includes('Mua Đan Dược') || 
-            el.textContent.includes('Hoạt Động Ngày')
-        )
-    );
+    // Tìm dòng 'Hoạt Động Ngày' hoặc 'Mua Đan Dược' trong menu Krizk
+    const allElements = Array.from(document.querySelectorAll('div, span, button'));
+    const target = allElements.find(el => el.children.length === 0 && (el.textContent.includes('Hoạt Động Ngày') || el.textContent.includes('Mua Đan Dược')));
 
-    if (!targetElement) return;
+    if (!target) return;
 
-    // Tìm thẻ cha chứa nguyên hàng nhiệm vụ (row container)
-    let taskRow = targetElement;
-    while (taskRow && taskRow.parentElement && taskRow.parentElement.children.length > 2) {
-        if (taskRow.parentElement.style.display === 'flex' || taskRow.style.display === 'flex') break;
-        taskRow = taskRow.parentElement;
+    // Leo lên thẻ row container ngoài cùng
+    let row = target;
+    while (row.parentElement && !row.parentElement.classList.contains('task-list') && row.parentElement.children.length < 5) {
+        row = row.parentElement;
     }
 
-    const container = taskRow.parentElement;
+    const container = row.parentElement || row.parentNode;
     if (!container) return;
 
-    // Tạo HTML chuẩn giao diện Krizk
     const div = document.createElement('div');
     div.id = 'row-mua-linh-duoc-select';
-    div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin-top: 5px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;';
+    div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin-top: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;';
     
     div.innerHTML = `
         <div style="display: flex; align-items: center; gap: 6px;">
@@ -11408,22 +11400,19 @@ function forceRenderLinhDuocMenu() {
         </div>
     `;
 
-    // Chèn ngay bên dưới hàng "Mua Đan Dược" hoặc "Hoạt Động Ngày"
-    taskRow.insertAdjacentElement('afterend', div);
+    container.appendChild(div);
 
     document.getElementById('btn-exec-buy-duoc').addEventListener('click', async () => {
         const selectEl = document.getElementById('select-linh-duoc-opt');
         const btn = document.getElementById('btn-exec-buy-duoc');
-        const selectedVal = selectEl.value;
-
         btn.textContent = '...';
         btn.style.opacity = '0.6';
 
-        await window.autoMuaLinhDuoc.buyItem(selectedVal);
+        await window.autoMuaLinhDuoc.buyItem(selectEl.value);
 
         btn.textContent = 'Mua';
         btn.style.opacity = '1';
     });
 }
 
-setInterval(forceRenderLinhDuocMenu, 1000);
+setInterval(renderLinhDuocMenuUI, 1000);
