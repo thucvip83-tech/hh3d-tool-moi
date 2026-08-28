@@ -11281,15 +11281,19 @@ class HoatDongNgay {
         }
 })();
 d
-// ==================== MODULE AUTO LUYỆN ĐAN (TBC-V2) ====================
-class AutoLuyenDanManager {
+// ==================== MODULE MUA LINH DƯỢC HOÀN CHỈNH ====================
+class AutoMuaLinhDuoc {
     constructor() {
         this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
-        this.isRunning = false;
-        this.timer = null;
     }
 
-    // Hàm gửi Request API chuẩn X-WP-Nonce
+    getSecurityToken() {
+        return window.hh3dData?.securityToken || 
+               window.hh3dData?.security_token || 
+               window.securityToken || 
+               '';
+    }
+
     async callApi(endpoint, payload = {}) {
         const nonce = window.hh3dData?.restNonce || window.wpApiSettings?.nonce || '';
         try {
@@ -11303,99 +11307,82 @@ class AutoLuyenDanManager {
             });
             return await res.json();
         } catch (err) {
-            console.error(`[Luyện Đan API Err] ${endpoint}:`, err);
+            console.error(`[Mua Dược API Lỗi] ${endpoint}:`, err);
             return null;
         }
     }
 
-    // 1. Mua gói/Linh dược tự động
-    async buyBundle(bundleId = 1) {
-        console.log(`[Luyện Đan] Đang mua gói linh dược ID: ${bundleId}...`);
-        return await this.callApi('buy-bundle', { bundle_id: bundleId });
+    // 1. Mua bán lẻ Linh Dược (Kim, Mộc, Thủy, Hỏa, Thổ...)
+    async buyRetail(elementName, quantity = 1) {
+        const payload = {
+            element: elementName,
+            qty: quantity,
+            security_token: this.getSecurityToken()
+        };
+        return await this.callApi('buy-retail', payload);
     }
 
-    // 2. Mở Túi Huyền Cơ bằng Đan Huân
-    async openHuyenCo() {
-        console.log('[Luyện Đan] Đang mở Túi Huyền Cơ...');
-        return await this.callApi('open-huyen-co', { action: 'open' });
-    }
-
-    // 3. Tự động bấm nút "Điều Hòa" hỏa lực lò đan trên giao diện
-    async autoDieuHoa() {
-        const btns = Array.from(document.querySelectorAll('button, a, div.btn'));
-        const btnDieuHoa = btns.find(b => b.textContent.trim().includes('Điều Hòa') || b.textContent.trim().includes('Điều hòa'));
-
-        if (btnDieuHoa && btnDieuHoa.offsetParent !== null) {
-            btnDieuHoa.click();
-            console.log('[Luyện Đan] Đã bấm Điều Hòa hỏa lực lò đan.');
-            return true;
+    // 2. Mua Gói Linh Dược (Dùng bundle_key chuẩn)
+    async buyBundle(bundleKey) {
+        console.log(`[Mua Gói] Đang mua: ${bundleKey}...`);
+        const payload = {
+            bundle_key: bundleKey,
+            security_token: this.getSecurityToken()
+        };
+        const res = await this.callApi('buy-bundle', payload);
+        if (res && (res.success || res.status === 'success')) {
+            console.log(`[Mua Gói] Thành công gói: ${bundleKey}`);
         }
-        return false;
+        return res;
     }
 
-    // Luồng tự động chạy ngầm canh hỏa lực
-    async runLoop() {
-        if (!this.isRunning) return;
-
-        await this.autoDieuHoa();
-
-        // Quét lại mỗi 3 giây
-        this.timer = setTimeout(() => this.runLoop(), 3000);
+    // Mua sạch dược lẻ hàng ngày
+    async autoBuyAllRetail(qty = 1) {
+        const elements = ['kim', 'moc', 'thuy', 'hoa', 'tho', 'linh-phong-thao'];
+        for (const elem of elements) {
+            await this.buyRetail(elem, qty);
+            await new Promise(r => setTimeout(r, 350));
+        }
+        alert('Đã mua xong toàn bộ Dược Lẻ!');
     }
 
-    start() {
-        if (this.isRunning) return;
-        this.isRunning = true;
-        console.log('[Luyện Đan] Đã BẬT Auto');
-        this.runLoop();
-    }
-
-    stop() {
-        this.isRunning = false;
-        if (this.timer) clearTimeout(this.timer);
-        console.log('[Luyện Đan] Đã TẮT Auto');
+    // Mua tự động gói túi ưu đãi
+    async autoBuyBundles() {
+        const bundleKeys = ['bundle_ld_tho', 'bundle_ld_s', 'bundle_ld_m', 'bundle_ld_l'];
+        for (const key of bundleKeys) {
+            await this.buyBundle(key);
+            await new Promise(r => setTimeout(r, 350));
+        }
+        alert('Đã gửi xong lệnh Mua Gói Túi!');
     }
 }
 
-window.autoLuyenDanMgr = new AutoLuyenDanManager();
+window.autoMuaLinhDuoc = new AutoMuaLinhDuoc();
 
-// ==================== TẠO GIAO DIỆN NÚT BẤM VÀO MENU ====================
-function renderLuyenDanMenu() {
+// ==================== TÍCH HỢP GIAO DIỆN MENU UI ====================
+function renderMuaLinhDuocMenu() {
     const taskContainer = document.querySelector('.task-list, #auto-menu-list, .menu-container');
-    if (!taskContainer || document.getElementById('row-luyen-dan')) return;
+    if (!taskContainer || document.getElementById('row-mua-linh-duoc')) return;
 
     const rowHtml = `
-        <div class="task-item" id="row-luyen-dan" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #333;">
-            <span style="font-weight: bold; color: #ffca28;">🔥 Luyện Đan</span>
+        <div class="task-item" id="row-mua-linh-duoc" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #333;">
+            <span style="font-weight: bold; color: #ffca28;">🌿 Mua Linh Dược</span>
             <div style="display: flex; gap: 5px;">
-                <button id="btn-quick-buy" style="background: #28a745; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Mua Dược</button>
-                <button id="btn-toggle-luyen-dan" style="background: #6c757d; color: #fff; border: none; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Tắt</button>
+                <button id="btn-buy-retail-all" style="background: #28a745; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Mua Dược Lẻ</button>
+                <button id="btn-buy-bundle-all" style="background: #17a2b8; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Mua Gói Túi</button>
             </div>
         </div>
     `;
 
     taskContainer.insertAdjacentHTML('beforeend', rowHtml);
 
-    // Sự kiện Bật/Tắt Auto canh Điều Hòa
-    const btnToggle = document.getElementById('btn-toggle-luyen-dan');
-    btnToggle.addEventListener('click', () => {
-        if (window.autoLuyenDanMgr.isRunning) {
-            window.autoLuyenDanMgr.stop();
-            btnToggle.textContent = 'Tắt';
-            btnToggle.style.background = '#6c757d';
-        } else {
-            window.autoLuyenDanMgr.start();
-            btnToggle.textContent = 'Đang Bật';
-            btnToggle.style.background = '#0d6efd';
-        }
+    document.getElementById('btn-buy-retail-all').addEventListener('click', async () => {
+        await window.autoMuaLinhDuoc.autoBuyAllRetail(1);
     });
 
-    // Nút Mua nhanh Dược/Gói
-    document.getElementById('btn-quick-buy').addEventListener('click', async () => {
-        const res = await window.autoLuyenDanMgr.buyBundle(1);
-        if (res) alert('Đã gửi lệnh Mua Dược!');
+    document.getElementById('btn-buy-bundle-all').addEventListener('click', async () => {
+        await window.autoMuaLinhDuoc.autoBuyBundles();
     });
 }
 
-// Chạy kiểm tra gắn Nút Menu định kỳ
-setInterval(renderLuyenDanMenu, 1000);
+setInterval(renderMuaLinhDuocMenu, 1000);
