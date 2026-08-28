@@ -11281,3 +11281,121 @@ class HoatDongNgay {
         }
 })();
 d
+// ==================== MODULE AUTO LUYỆN ĐAN (TBC-V2) ====================
+class AutoLuyenDanManager {
+    constructor() {
+        this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
+        this.isRunning = false;
+        this.timer = null;
+    }
+
+    // Hàm gửi Request API chuẩn X-WP-Nonce
+    async callApi(endpoint, payload = {}) {
+        const nonce = window.hh3dData?.restNonce || window.wpApiSettings?.nonce || '';
+        try {
+            const res = await fetch(this.baseUrl + endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': nonce
+                },
+                body: JSON.stringify(payload)
+            });
+            return await res.json();
+        } catch (err) {
+            console.error(`[Luyện Đan API Err] ${endpoint}:`, err);
+            return null;
+        }
+    }
+
+    // 1. Mua gói/Linh dược tự động
+    async buyBundle(bundleId = 1) {
+        console.log(`[Luyện Đan] Đang mua gói linh dược ID: ${bundleId}...`);
+        return await this.callApi('buy-bundle', { bundle_id: bundleId });
+    }
+
+    // 2. Mở Túi Huyền Cơ bằng Đan Huân
+    async openHuyenCo() {
+        console.log('[Luyện Đan] Đang mở Túi Huyền Cơ...');
+        return await this.callApi('open-huyen-co', { action: 'open' });
+    }
+
+    // 3. Tự động bấm nút "Điều Hòa" hỏa lực lò đan trên giao diện
+    async autoDieuHoa() {
+        const btns = Array.from(document.querySelectorAll('button, a, div.btn'));
+        const btnDieuHoa = btns.find(b => b.textContent.trim().includes('Điều Hòa') || b.textContent.trim().includes('Điều hòa'));
+
+        if (btnDieuHoa && btnDieuHoa.offsetParent !== null) {
+            btnDieuHoa.click();
+            console.log('[Luyện Đan] Đã bấm Điều Hòa hỏa lực lò đan.');
+            return true;
+        }
+        return false;
+    }
+
+    // Luồng tự động chạy ngầm canh hỏa lực
+    async runLoop() {
+        if (!this.isRunning) return;
+
+        await this.autoDieuHoa();
+
+        // Quét lại mỗi 3 giây
+        this.timer = setTimeout(() => this.runLoop(), 3000);
+    }
+
+    start() {
+        if (this.isRunning) return;
+        this.isRunning = true;
+        console.log('[Luyện Đan] Đã BẬT Auto');
+        this.runLoop();
+    }
+
+    stop() {
+        this.isRunning = false;
+        if (this.timer) clearTimeout(this.timer);
+        console.log('[Luyện Đan] Đã TẮT Auto');
+    }
+}
+
+window.autoLuyenDanMgr = new AutoLuyenDanManager();
+
+// ==================== TẠO GIAO DIỆN NÚT BẤM VÀO MENU ====================
+function renderLuyenDanMenu() {
+    const taskContainer = document.querySelector('.task-list, #auto-menu-list, .menu-container');
+    if (!taskContainer || document.getElementById('row-luyen-dan')) return;
+
+    const rowHtml = `
+        <div class="task-item" id="row-luyen-dan" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #333;">
+            <span style="font-weight: bold; color: #ffca28;">🔥 Luyện Đan</span>
+            <div style="display: flex; gap: 5px;">
+                <button id="btn-quick-buy" style="background: #28a745; color: #fff; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Mua Dược</button>
+                <button id="btn-toggle-luyen-dan" style="background: #6c757d; color: #fff; border: none; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Tắt</button>
+            </div>
+        </div>
+    `;
+
+    taskContainer.insertAdjacentHTML('beforeend', rowHtml);
+
+    // Sự kiện Bật/Tắt Auto canh Điều Hòa
+    const btnToggle = document.getElementById('btn-toggle-luyen-dan');
+    btnToggle.addEventListener('click', () => {
+        if (window.autoLuyenDanMgr.isRunning) {
+            window.autoLuyenDanMgr.stop();
+            btnToggle.textContent = 'Tắt';
+            btnToggle.style.background = '#6c757d';
+        } else {
+            window.autoLuyenDanMgr.start();
+            btnToggle.textContent = 'Đang Bật';
+            btnToggle.style.background = '#0d6efd';
+        }
+    });
+
+    // Nút Mua nhanh Dược/Gói
+    document.getElementById('btn-quick-buy').addEventListener('click', async () => {
+        const res = await window.autoLuyenDanMgr.buyBundle(1);
+        if (res) alert('Đã gửi lệnh Mua Dược!');
+    });
+}
+
+// Chạy kiểm tra gắn Nút Menu định kỳ
+setInterval(renderLuyenDanMenu, 1000);
