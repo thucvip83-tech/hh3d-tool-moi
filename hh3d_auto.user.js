@@ -11279,7 +11279,7 @@ class HoatDongNgay {
         if (location.pathname.includes("khoang-mach") || location.href.includes("khoang-mach")) {            
             hienTuviKM.startUp();
         } 
-// ==================== KHỐI XỬ LÝ API MUA LINH DƯỢC ====================
+// ==================== PANEL MUA LINH DƯỢC ĐỘC LẬP ====================
     class AutoMuaLinhDuoc {
         constructor() {
             this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
@@ -11343,81 +11343,76 @@ class HoatDongNgay {
             if (res && (res.success || res.status === 'success')) alert(`Mua thành công 1x ${itemValue}!`);
         }
     }
-    // ==================== TẠO UI BÁM THEO CẤU TRÚC KRIZK ====================
-    function renderLinhDuocRow() {
-        if (document.getElementById('row-mua-linh-duoc-select')) return;
 
-        // Quét tìm tất cả các hàng nút trong Menu Krizk
-        const allRows = Array.from(document.querySelectorAll('div'));
-        const anchorRow = allRows.reverse().find(el => {
-            const text = el.textContent || '';
-            return (text.includes('Mua Đan Dược') || text.includes('Vòng Quay')) && el.children.length >= 2;
-        });
+    const autoLinhDuocGlobal = new AutoMuaLinhDuoc();
 
-        if (!anchorRow) return;
+    function createFloatingPanel() {
+        if (document.getElementById('floating-linh-duoc-panel')) return;
 
-        // Tạo phần tử DOM đúng style mẫu của Krizk
-        const row = document.createElement('div');
-        row.id = 'row-mua-linh-duoc-select';
-        row.className = anchorRow.className || '';
-        row.style.cssText = `
+        const panel = document.createElement('div');
+        panel.id = 'floating-linh-duoc-panel';
+        panel.style.cssText = `
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            z-index: 999999 !important;
+            background: #1a1a1d !important;
+            border: 2px solid #6f42c1 !important;
+            border-radius: 8px !important;
+            padding: 10px 14px !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
             display: flex !important;
             align-items: center !important;
-            justify-content: space-between !important;
-            padding: 6px 10px !important;
-            margin-top: 5px !important;
-            background: rgba(255, 255, 255, 0.05) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 6px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
+            gap: 8px !important;
+            font-family: sans-serif !important;
         `;
 
-        row.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 14px;">🌿</span>
-                <span style="font-weight: 500; color: #e0e0e0; font-size: 12px;">Mua Linh Dược</span>
-            </div>
-            <div style="display: flex; gap: 6px; align-items: center;">
-                <select id="select-linh-duoc-opt" style="background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 3px 6px; border-radius: 4px; font-size: 11px; outline: none; cursor: pointer;">
-                    <optgroup label="-- Tất Cả --">
-                        <option value="all_retail">Tất Cả Dược Lẻ</option>
-                        <option value="all_bundles">Tất Cả Gói Túi</option>
-                    </optgroup>
-                    <optgroup label="-- Nguyên Liệu Lẻ --">
-                        <option value="kim">Kim Linh Quả</option>
-                        <option value="moc" selected>Mộc Linh Quả</option>
-                        <option value="thuy">Thủy Linh Quả</option>
-                        <option value="hoa">Hỏa Linh Quả</option>
-                        <option value="tho">Thổ Linh Quả</option>
-                        <option value="linh-phong-thao">Linh Phong Thảo</option>
-                    </optgroup>
-                    <optgroup label="-- Gói Túi --">
-                        <option value="bundle_ld_tho">Túi Linh Dược Thổ</option>
-                        <option value="bundle_ld_s">Túi Linh Dược Tiểu</option>
-                        <option value="bundle_ld_m">Túi Linh Dược Trung</option>
-                        <option value="bundle_ld_l">Túi Linh Dược Đại</option>
-                    </optgroup>
-                </select>
-                <button id="btn-exec-buy-duoc" style="background: #6f42c1; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">Mua</button>
-            </div>
+        panel.innerHTML = `
+            <span style="font-size: 16px;">🌿</span>
+            <span style="font-weight: bold; color: #fff; font-size: 13px;">Mua Linh Dược:</span>
+            <select id="float-select-duoc" style="background: #2b2b2b; color: #fff; border: 1px solid #555; padding: 4px 8px; border-radius: 4px; font-size: 12px; outline: none; cursor: pointer;">
+                <optgroup label="-- Tất Cả --">
+                    <option value="all_retail">Tất Cả Dược Lẻ</option>
+                    <option value="all_bundles">Tất Cả Gói Túi</option>
+                </optgroup>
+                <optgroup label="-- Nguyên Liệu Lẻ --">
+                    <option value="kim">Kim Linh Quả</option>
+                    <option value="moc" selected>Mộc Linh Quả</option>
+                    <option value="thuy">Thủy Linh Quả</option>
+                    <option value="hoa">Hỏa Linh Quả</option>
+                    <option value="tho">Thổ Linh Quả</option>
+                    <option value="linh-phong-thao">Linh Phong Thảo</option>
+                </optgroup>
+                <optgroup label="-- Gói Túi --">
+                    <option value="bundle_ld_tho">Túi Linh Dược Thổ</option>
+                    <option value="bundle_ld_s">Túi Linh Dược Tiểu</option>
+                    <option value="bundle_ld_m">Túi Linh Dược Trung</option>
+                    <option value="bundle_ld_l">Túi Linh Dược Đại</option>
+                </optgroup>
+            </select>
+            <button id="float-btn-buy" style="background: #6f42c1; color: #fff; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Mua Ngay</button>
         `;
 
-        anchorRow.insertAdjacentElement('afterend', row);
+        document.body.appendChild(panel);
 
-        document.getElementById('btn-exec-buy-duoc').addEventListener('click', async () => {
-            const selectEl = document.getElementById('select-linh-duoc-opt');
-            const btn = document.getElementById('btn-exec-buy-duoc');
+        document.getElementById('float-btn-buy').addEventListener('click', async () => {
+            const selectEl = document.getElementById('float-select-duoc');
+            const btn = document.getElementById('float-btn-buy');
             btn.textContent = '...';
             btn.style.opacity = '0.6';
 
-            await autoLinhDuoc.buyItem(selectEl.value);
+            await autoLinhDuocGlobal.buyItem(selectEl.value);
 
-            btn.textContent = 'Mua';
+            btn.textContent = 'Mua Ngay';
             btn.style.opacity = '1';
         });
     }
 
-    // Chạy liên tục để chống bị script Krizk đè mất giao diện
-    setInterval(renderLinhDuocRow, 500);
+    // Chạy khi trang web load xong
+    if (document.readyState === 'complete') {
+        createFloatingPanel();
+    } else {
+        window.addEventListener('load', createFloatingPanel);
+    }
+    setInterval(createFloatingPanel, 1500);
 })();
