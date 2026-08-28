@@ -11281,7 +11281,7 @@ class HoatDongNgay {
         }
 })();
 d
-// ==================== MODULE MUA LINH DƯỢC HOÀN CHỈNH ====================
+// ==================== MODULE MUA LINH DƯỢC (KRIZK UI FIT) ====================
 class AutoMuaLinhDuoc {
     constructor() {
         this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
@@ -11312,7 +11312,6 @@ class AutoMuaLinhDuoc {
         }
     }
 
-    // 1. Mua bán lẻ Linh Dược (Kim, Mộc, Thủy, Hỏa, Thổ...)
     async buyRetail(elementName, quantity = 1) {
         const payload = {
             element: elementName,
@@ -11322,7 +11321,6 @@ class AutoMuaLinhDuoc {
         return await this.callApi('buy-retail', payload);
     }
 
-    // 2. Mua Gói Linh Dược (Dùng bundle_key chuẩn)
     async buyBundle(bundleKey) {
         console.log(`[Mua Gói] Đang mua: ${bundleKey}...`);
         const payload = {
@@ -11336,7 +11334,6 @@ class AutoMuaLinhDuoc {
         return res;
     }
 
-    // Mua sạch dược lẻ hàng ngày
     async autoBuyAllRetail(qty = 1) {
         const elements = ['kim', 'moc', 'thuy', 'hoa', 'tho', 'linh-phong-thao'];
         for (const elem of elements) {
@@ -11346,7 +11343,6 @@ class AutoMuaLinhDuoc {
         alert('Đã mua xong toàn bộ Dược Lẻ!');
     }
 
-    // Mua tự động gói túi ưu đãi
     async autoBuyBundles() {
         const bundleKeys = ['bundle_ld_tho', 'bundle_ld_s', 'bundle_ld_m', 'bundle_ld_l'];
         for (const key of bundleKeys) {
@@ -11359,22 +11355,32 @@ class AutoMuaLinhDuoc {
 
 window.autoMuaLinhDuoc = new AutoMuaLinhDuoc();
 
-// ==================== TÍCH HỢP GIAO DIỆN MENU UI ====================
+// ==================== TÍCH HỢP CHUẨN GIAO DIỆN KRIZK ====================
 function renderMuaLinhDuocMenu() {
-    const taskContainer = document.querySelector('.task-list, #auto-menu-list, .menu-container');
-    if (!taskContainer || document.getElementById('row-mua-linh-duoc')) return;
+    // Tìm thẻ chứa item (thẻ cha của dòng "Hoạt Động Ngày - Vòng Quay")
+    const lastRow = document.querySelector('.task-item:last-child, div[class*="task"]:last-child') || 
+                    Array.from(document.querySelectorAll('div')).find(el => el.textContent.includes('Hoạt Động Ngày'));
 
+    if (!lastRow) return;
+    const parentContainer = lastRow.parentElement;
+
+    if (!parentContainer || document.getElementById('row-mua-linh-duoc-krizk')) return;
+
+    // Thiết kế HTML khớp 100% với khung giao diện Krizk
     const rowHtml = `
-        <div class="task-item" id="row-mua-linh-duoc" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #333;">
-            <span style="font-weight: bold; color: #ffca28;">🌿 Mua Linh Dược</span>
-            <div style="display: flex; gap: 5px;">
-                <button id="btn-buy-retail-all" style="background: #28a745; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Mua Dược Lẻ</button>
-                <button id="btn-buy-bundle-all" style="background: #17a2b8; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Mua Gói Túi</button>
+        <div class="task-item" id="row-mua-linh-duoc-krizk" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; margin-top: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">🌿</span>
+                <span style="font-weight: 500; color: #e0e0e0; font-size: 13px;">Linh Dược</span>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <button id="btn-buy-retail-all" style="background: #6f42c1; color: #fff; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">Dược Lẻ</button>
+                <button id="btn-buy-bundle-all" style="background: #17a2b8; color: #fff; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">Gói Túi</button>
             </div>
         </div>
     `;
 
-    taskContainer.insertAdjacentHTML('beforeend', rowHtml);
+    parentContainer.insertAdjacentHTML('beforeend', rowHtml);
 
     document.getElementById('btn-buy-retail-all').addEventListener('click', async () => {
         await window.autoMuaLinhDuoc.autoBuyAllRetail(1);
