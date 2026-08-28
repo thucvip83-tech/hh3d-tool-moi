@@ -11279,7 +11279,7 @@ class HoatDongNgay {
         if (location.pathname.includes("khoang-mach") || location.href.includes("khoang-mach")) {            
             hienTuviKM.startUp();
         } 
- // ==================== HOOK TRỰC TIẾP KHUNG KRIZK (KHÔNG PHỤ THUỘC DOM) ====================
+// ==================== KHỐI XỬ LÝ API MUA LINH DƯỢC ====================
     class AutoMuaLinhDuoc {
         constructor() {
             this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
@@ -11344,26 +11344,39 @@ class HoatDongNgay {
         }
     }
 
-    const autoLinhDuocInstance = new AutoMuaLinhDuoc();
+    const autoLinhDuoc = new AutoMuaLinhDuoc();
 
-    // ==================== ÉP CHÈN BẰNG CONTAINER GỐC ====================
-    function forceInjectLinhDuoc() {
+    // ==================== TẠO UI BÁM THEO CẤU TRÚC KRIZK ====================
+    function renderLinhDuocRow() {
         if (document.getElementById('row-mua-linh-duoc-select')) return;
 
-        // Quét lấy tất cả các khung chứa danh sách trên màn hình
-        const containers = Array.from(document.querySelectorAll('div')).filter(el => {
-            return el.children.length >= 8 && Array.from(el.children).some(child => child.textContent.includes('Đố Thạch') || child.textContent.includes('Bí Cảnh'));
+        // Quét tìm tất cả các hàng nút trong Menu Krizk
+        const allRows = Array.from(document.querySelectorAll('div'));
+        const anchorRow = allRows.reverse().find(el => {
+            const text = el.textContent || '';
+            return (text.includes('Mua Đan Dược') || text.includes('Vòng Quay')) && el.children.length >= 2;
         });
 
-        if (containers.length === 0) return;
+        if (!anchorRow) return;
 
-        const mainContainer = containers[0];
+        // Tạo phần tử DOM đúng style mẫu của Krizk
+        const row = document.createElement('div');
+        row.id = 'row-mua-linh-duoc-select';
+        row.className = anchorRow.className || '';
+        row.style.cssText = `
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 6px 10px !important;
+            margin-top: 5px !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 6px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        `;
 
-        const div = document.createElement('div');
-        div.id = 'row-mua-linh-duoc-select';
-        div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin-top: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; width: 100%; box-sizing: border-box;';
-        
-        div.innerHTML = `
+        row.innerHTML = `
             <div style="display: flex; align-items: center; gap: 6px;">
                 <span style="font-size: 14px;">🌿</span>
                 <span style="font-weight: 500; color: #e0e0e0; font-size: 12px;">Mua Linh Dược</span>
@@ -11393,8 +11406,7 @@ class HoatDongNgay {
             </div>
         `;
 
-        // Thêm trực tiếp vào cuối danh sách menu
-        mainContainer.appendChild(div);
+        anchorRow.insertAdjacentElement('afterend', row);
 
         document.getElementById('btn-exec-buy-duoc').addEventListener('click', async () => {
             const selectEl = document.getElementById('select-linh-duoc-opt');
@@ -11402,12 +11414,13 @@ class HoatDongNgay {
             btn.textContent = '...';
             btn.style.opacity = '0.6';
 
-            await autoLinhDuocInstance.buyItem(selectEl.value);
+            await autoLinhDuoc.buyItem(selectEl.value);
 
             btn.textContent = 'Mua';
             btn.style.opacity = '1';
         });
     }
 
-    setInterval(forceInjectLinhDuoc, 800);
+    // Chạy liên tục để chống bị script Krizk đè mất giao diện
+    setInterval(renderLinhDuocRow, 500);
 })();
