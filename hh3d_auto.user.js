@@ -11279,16 +11279,30 @@ class HoatDongNgay {
         if (location.pathname.includes("khoang-mach") || location.href.includes("khoang-mach")) {            
             hienTuviKM.startUp();
         } 
-// ==================== KHỐI TỰ ĐỘNG CLICK MUA LINH DƯỢC ====================
+// ==================== KHỐI TỰ ĐỘNG CLICK MUA THẬT ====================
     async function triggerNativeBuy(itemValue) {
-        // Hàm tìm nút Mua dựa vào tên hiển thị trong khung
         const findAndClickBtn = async (itemName) => {
-            const cards = Array.from(document.querySelectorAll('div, section, article'));
+            const cards = Array.from(document.querySelectorAll('div, section, article, .card'));
             for (const card of cards) {
                 if (card.children.length > 0 && card.innerText && card.innerText.includes(itemName)) {
-                    const buyBtn = Array.from(card.querySelectorAll('button')).find(btn => btn.textContent.trim() === 'Mua');
-                    if (buyBtn && !buyBtn.disabled) {
+                    // Tìm tất cả nút bấm có thể click mua
+                    const buttons = Array.from(card.querySelectorAll('button, a'));
+                    const buyBtn = buttons.find(btn => {
+                        const text = btn.textContent.trim().toLowerCase();
+                        return (text === 'mua' || text.includes('mua gói')) && !btn.disabled && !btn.classList.contains('disabled');
+                    });
+
+                    if (buyBtn) {
                         buyBtn.click();
+                        await new Promise(r => setTimeout(r, 400));
+                        
+                        // Tự động bấm nút "Xác nhận" nếu web hiện popup hỏi lại
+                        const confirmBtn = Array.from(document.querySelectorAll('button, div')).find(el => {
+                            const t = el.textContent.trim().toLowerCase();
+                            return t === 'xác nhận' || t === 'đồng ý' || t === 'ok';
+                        });
+                        if (confirmBtn) confirmBtn.click();
+                        
                         return true;
                     }
                 }
@@ -11315,9 +11329,8 @@ class HoatDongNgay {
             for (const name of retailList) {
                 const clicked = await findAndClickBtn(name);
                 if (clicked) count++;
-                await new Promise(r => setTimeout(r, 600));
             }
-            alert(`Đã kích hoạt mua ${count} món dược lẻ!`);
+            alert(`Đã thực hiện mua ${count} món còn lượt mua!`);
             return;
         }
 
@@ -11327,9 +11340,8 @@ class HoatDongNgay {
             for (const name of bundleList) {
                 const clicked = await findAndClickBtn(name);
                 if (clicked) count++;
-                await new Promise(r => setTimeout(r, 600));
             }
-            alert(`Đã kích hoạt mua ${count} gói túi!`);
+            alert(`Đã thực hiện mua ${count} gói túi còn lượt!`);
             return;
         }
 
@@ -11337,7 +11349,7 @@ class HoatDongNgay {
         if (targetName) {
             const success = await findAndClickBtn(targetName);
             if (!success) {
-                alert(`Không tìm thấy nút Mua cho "${targetName}" (có thể đã hết lượt hoặc chưa mở bán)!`);
+                alert(`Vật phẩm "${targetName}" hiện đang HẾT LƯỢT MUA hoặc CHƯA MỞ BÁN!`);
             }
         }
     }
@@ -11374,7 +11386,7 @@ class HoatDongNgay {
                 <optgroup label="-- Nguyên Liệu Lẻ --">
                     <option value="kim">Kim Linh Quả</option>
                     <option value="moc" selected>Mộc Linh Quả</option>
-                    <option value="thuy">Thủy Linh Quủy</option>
+                    <option value="thuy">Thủy Linh Quả</option>
                     <option value="hoa">Hỏa Linh Quả</option>
                     <option value="tho">Thổ Linh Quả</option>
                     <option value="linh-phong-thao">Linh Phong Thảo</option>
