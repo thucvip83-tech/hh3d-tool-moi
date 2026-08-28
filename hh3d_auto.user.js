@@ -11281,7 +11281,7 @@ class HoatDongNgay {
         }
 })();
 d
-// ==================== MODULE MUA LINH DƯỢC (MENU DROPDOWN) ====================
+// ==================== MODULE MUA LINH DƯỢC (CHÈN TRỰC TIẾP KHUNG KRIZK) ====================
 class AutoMuaLinhDuoc {
     constructor() {
         this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
@@ -11315,7 +11315,6 @@ class AutoMuaLinhDuoc {
     async buyItem(itemValue) {
         const token = this.getSecurityToken();
 
-        // 1. Trường hợp chọn Mua Tất Cả
         if (itemValue === 'all_retail') {
             const elements = ['kim', 'moc', 'thuy', 'hoa', 'tho', 'linh-phong-thao'];
             for (const elem of elements) {
@@ -11336,14 +11335,12 @@ class AutoMuaLinhDuoc {
             return;
         }
 
-        // 2. Trường hợp chọn Gói Túi lẻ
         if (itemValue.startsWith('bundle_')) {
             const res = await this.callApi('buy-bundle', { bundle_key: itemValue, security_token: token });
             if (res && (res.success || res.status === 'success')) alert('Mua gói thành công!');
             return;
         }
 
-        // 3. Trường hợp chọn Nguyên liệu lẻ (kim, moc, thuy...)
         const res = await this.callApi('buy-retail', { element: itemValue, qty: 1, security_token: token });
         if (res && (res.success || res.status === 'success')) alert(`Mua thành công 1x ${itemValue}!`);
     }
@@ -11351,52 +11348,68 @@ class AutoMuaLinhDuoc {
 
 window.autoMuaLinhDuoc = new AutoMuaLinhDuoc();
 
-// ==================== TÍCH HỢP DÒNG MUA LINH DƯỢC VÀO MENU ====================
-function renderMuaLinhDuocDropdownMenu() {
+// ==================== HÀM RENDER MENU CHẮC CHẮN HIỂN THỊ ====================
+function forceRenderLinhDuocMenu() {
     if (document.getElementById('row-mua-linh-duoc-select')) return;
 
-    // Tìm vị trí dòng "Mua Đan Dược" hoặc dòng cuối cùng trên menu
-    const allDivs = Array.from(document.querySelectorAll('div'));
-    const targetRow = allDivs.find(el => el.textContent.includes('Mua Đan Dược') || el.textContent.includes('Hoạt Động Ngày'));
+    // Tìm tất cả các phần tử chứa text "Mua Đan Dược" hoặc "Hoạt Động Ngày"
+    const elements = Array.from(document.querySelectorAll('*'));
+    const targetElement = elements.reverse().find(el => 
+        el.children.length === 0 && (
+            el.textContent.includes('Mua Đan Dược') || 
+            el.textContent.includes('Hoạt Động Ngày')
+        )
+    );
 
-    if (!targetRow) return;
+    if (!targetElement) return;
 
-    const parentContainer = targetRow.closest('[class*="task"]')?.[0]?.parentElement || targetRow.parentElement;
-    if (!parentContainer) return;
+    // Tìm thẻ cha chứa nguyên hàng nhiệm vụ (row container)
+    let taskRow = targetElement;
+    while (taskRow && taskRow.parentElement && taskRow.parentElement.children.length > 2) {
+        if (taskRow.parentElement.style.display === 'flex' || taskRow.style.display === 'flex') break;
+        taskRow = taskRow.parentElement;
+    }
 
-    const rowHtml = `
-        <div class="task-item" id="row-mua-linh-duoc-select" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; margin-top: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 16px;">🌿</span>
-                <span style="font-weight: 500; color: #e0e0e0; font-size: 13px;">Mua Linh Dược</span>
-            </div>
-            <div style="display: flex; gap: 6px; align-items: center;">
-                <select id="select-linh-duoc-opt" style="background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 4px 6px; border-radius: 6px; font-size: 12px; outline: none; cursor: pointer;">
-                    <optgroup label="-- Tất Cả --">
-                        <option value="all_retail">Tất Cả Dược Lẻ</option>
-                        <option value="all_bundles">Tất Cả Gói Túi</option>
-                    </optgroup>
-                    <optgroup label="-- Nguyên Liệu Lẻ --">
-                        <option value="kim">Kim Linh Quả</option>
-                        <option value="moc" selected>Mộc Linh Quả</option>
-                        <option value="thuy">Thủy Linh Quả</option>
-                        <option value="hoa">Hỏa Linh Quả</option>
-                        <option value="tho">Thổ Linh Quả</option>
-                        <option value="linh-phong-thao">Linh Phong Thảo</option>
-                    </optgroup>
-                    <optgroup label="-- Gói Túi --">
-                        <option value="bundle_ld_tho">Túi Linh Dược Thổ</option>
-                        <option value="bundle_ld_s">Túi Linh Dược Tiểu</option>
-                        <option value="bundle_ld_m">Túi Linh Dược Trung</option>
-                        <option value="bundle_ld_l">Túi Linh Dược Đại</option>
-                    </optgroup>
-                </select>
-                <button id="btn-exec-buy-duoc" style="background: #007bff; color: #fff; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">Mua</button>
-            </div>
+    const container = taskRow.parentElement;
+    if (!container) return;
+
+    // Tạo HTML chuẩn giao diện Krizk
+    const div = document.createElement('div');
+    div.id = 'row-mua-linh-duoc-select';
+    div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin-top: 5px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;';
+    
+    div.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 14px;">🌿</span>
+            <span style="font-weight: 500; color: #e0e0e0; font-size: 12px;">Mua Linh Dược</span>
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center;">
+            <select id="select-linh-duoc-opt" style="background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 3px 6px; border-radius: 4px; font-size: 11px; outline: none; cursor: pointer;">
+                <optgroup label="-- Tất Cả --">
+                    <option value="all_retail">Tất Cả Dược Lẻ</option>
+                    <option value="all_bundles">Tất Cả Gói Túi</option>
+                </optgroup>
+                <optgroup label="-- Nguyên Liệu Lẻ --">
+                    <option value="kim">Kim Linh Quả</option>
+                    <option value="moc" selected>Mộc Linh Quả</option>
+                    <option value="thuy">Thủy Linh Quả</option>
+                    <option value="hoa">Hỏa Linh Quả</option>
+                    <option value="tho">Thổ Linh Quả</option>
+                    <option value="linh-phong-thao">Linh Phong Thảo</option>
+                </optgroup>
+                <optgroup label="-- Gói Túi --">
+                    <option value="bundle_ld_tho">Túi Linh Dược Thổ</option>
+                    <option value="bundle_ld_s">Túi Linh Dược Tiểu</option>
+                    <option value="bundle_ld_m">Túi Linh Dược Trung</option>
+                    <option value="bundle_ld_l">Túi Linh Dược Đại</option>
+                </optgroup>
+            </select>
+            <button id="btn-exec-buy-duoc" style="background: #6f42c1; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">Mua</button>
         </div>
     `;
 
-    parentContainer.insertAdjacentHTML('beforeend', rowHtml);
+    // Chèn ngay bên dưới hàng "Mua Đan Dược" hoặc "Hoạt Động Ngày"
+    taskRow.insertAdjacentElement('afterend', div);
 
     document.getElementById('btn-exec-buy-duoc').addEventListener('click', async () => {
         const selectEl = document.getElementById('select-linh-duoc-opt');
@@ -11413,4 +11426,4 @@ function renderMuaLinhDuocDropdownMenu() {
     });
 }
 
-setInterval(renderMuaLinhDuocDropdownMenu, 1000);
+setInterval(forceRenderLinhDuocMenu, 1000);
