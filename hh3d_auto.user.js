@@ -11278,141 +11278,143 @@ class HoatDongNgay {
         automatic.checkAndStart();
         if (location.pathname.includes("khoang-mach") || location.href.includes("khoang-mach")) {            
             hienTuviKM.startUp();
+        } 
+        // ==================== HOOK TRỰC TIẾP MENU KRIZK ====================
+    class AutoMuaLinhDuoc {
+        constructor() {
+            this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
         }
+
+        getSecurityToken() {
+            return window.hh3dData?.securityToken || 
+                   window.hh3dData?.security_token || 
+                   window.securityToken || 
+                   '';
+        }
+
+        async callApi(endpoint, payload = {}) {
+            const nonce = window.hh3dData?.restNonce || window.wpApiSettings?.nonce || '';
+            try {
+                const res = await fetch(this.baseUrl + endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': nonce
+                    },
+                    body: JSON.stringify(payload)
+                });
+                return await res.json();
+            } catch (err) {
+                console.error(`[Mua Dược API Lỗi] ${endpoint}:`, err);
+                return null;
+            }
+        }
+
+        async buyItem(itemValue) {
+            const token = this.getSecurityToken();
+
+            if (itemValue === 'all_retail') {
+                const elements = ['kim', 'moc', 'thuy', 'hoa', 'tho', 'linh-phong-thao'];
+                for (const elem of elements) {
+                    await this.callApi('buy-retail', { element: elem, qty: 1, security_token: token });
+                    await new Promise(r => setTimeout(r, 300));
+                }
+                alert('Đã mua xong tất cả Linh Dược lẻ!');
+                return;
+            }
+
+            if (itemValue === 'all_bundles') {
+                const bundleKeys = ['bundle_ld_tho', 'bundle_ld_s', 'bundle_ld_m', 'bundle_ld_l'];
+                for (const key of bundleKeys) {
+                    await this.callApi('buy-bundle', { bundle_key: key, security_token: token });
+                    await new Promise(r => setTimeout(r, 300));
+                }
+                alert('Đã mua xong tất cả Gói Túi!');
+                return;
+            }
+
+            if (itemValue.startsWith('bundle_')) {
+                const res = await this.callApi('buy-bundle', { bundle_key: itemValue, security_token: token });
+                if (res && (res.success || res.status === 'success')) alert('Mua gói thành công!');
+                return;
+            }
+
+            const res = await this.callApi('buy-retail', { element: itemValue, qty: 1, security_token: token });
+            if (res && (res.success || res.status === 'success')) alert(`Mua thành công 1x ${itemValue}!`);
+        }
+    }
+
+    const autoLinhDuocInstance = new AutoMuaLinhDuoc();
+
+    // Hàm gắn thẳng UI vào DOM chính
+    function attachLinhDuocToUI() {
+        if (document.getElementById('row-mua-linh-duoc-select')) return;
+
+        // Quét tìm thẻ chứa chữ "Mua Đan Dược" hoặc "Hoạt Động Ngày"
+        const targetText = Array.from(document.querySelectorAll('*')).find(el => 
+            el.children.length === 0 && 
+            (el.textContent.trim() === 'Mua Đan Dược' || el.textContent.trim().includes('Hoạt Động Ngày'))
+        );
+
+        if (!targetText) return;
+
+        // Tìm thẻ container chứa nguyên dòng đó
+        let taskRow = targetText;
+        while (taskRow.parentElement && !taskRow.parentElement.classList.contains('task-list') && taskRow.parentElement.children.length < 4) {
+            taskRow = taskRow.parentElement;
+        }
+
+        if (!taskRow || !taskRow.parentElement) return;
+
+        const div = document.createElement('div');
+        div.id = 'row-mua-linh-duoc-select';
+        div.className = taskRow.className || '';
+        div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin-top: 5px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;';
+        
+        div.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 14px;">🌿</span>
+                <span style="font-weight: 500; color: #e0e0e0; font-size: 12px;">Mua Linh Dược</span>
+            </div>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="select-linh-duoc-opt" style="background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 3px 6px; border-radius: 4px; font-size: 11px; outline: none; cursor: pointer;">
+                    <optgroup label="-- Tất Cả --">
+                        <option value="all_retail">Tất Cả Dược Lẻ</option>
+                        <option value="all_bundles">Tất Cả Gói Túi</option>
+                    </optgroup>
+                    <optgroup label="-- Nguyên Liệu Lẻ --">
+                        <option value="kim">Kim Linh Quả</option>
+                        <option value="moc" selected>Mộc Linh Quả</option>
+                        <option value="thuy">Thủy Linh Quả</option>
+                        <option value="hoa">Hỏa Linh Quả</option>
+                        <option value="tho">Thổ Linh Quả</option>
+                        <option value="linh-phong-thao">Linh Phong Thảo</option>
+                    </optgroup>
+                    <optgroup label="-- Gói Túi --">
+                        <option value="bundle_ld_tho">Túi Linh Dược Thổ</option>
+                        <option value="bundle_ld_s">Túi Linh Dược Tiểu</option>
+                        <option value="bundle_ld_m">Túi Linh Dược Trung</option>
+                        <option value="bundle_ld_l">Túi Linh Dược Đại</option>
+                    </optgroup>
+                </select>
+                <button id="btn-exec-buy-duoc" style="background: #6f42c1; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">Mua</button>
+            </div>
+        `;
+
+        taskRow.parentElement.appendChild(div);
+
+        document.getElementById('btn-exec-buy-duoc').addEventListener('click', async () => {
+            const selectEl = document.getElementById('select-linh-duoc-opt');
+            const btn = document.getElementById('btn-exec-buy-duoc');
+            btn.textContent = '...';
+            btn.style.opacity = '0.6';
+
+            await autoLinhDuocInstance.buyItem(selectEl.value);
+
+            btn.textContent = 'Mua';
+            btn.style.opacity = '1';
+        });
+    }
+
+    setInterval(attachLinhDuocToUI, 1000);
 })();
-// ==================== MODULE MUA LINH DƯỢC ====================
-class AutoMuaLinhDuoc {
-    constructor() {
-        this.baseUrl = 'https://hoathinh3d.im/wp-json/hh3d/v1/tbc-v2/';
-    }
-
-    getSecurityToken() {
-        return window.hh3dData?.securityToken || 
-               window.hh3dData?.security_token || 
-               window.securityToken || 
-               '';
-    }
-
-    async callApi(endpoint, payload = {}) {
-        const nonce = window.hh3dData?.restNonce || window.wpApiSettings?.nonce || '';
-        try {
-            const res = await fetch(this.baseUrl + endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce': nonce
-                },
-                body: JSON.stringify(payload)
-            });
-            return await res.json();
-        } catch (err) {
-            console.error(`[Mua Dược API Lỗi] ${endpoint}:`, err);
-            return null;
-        }
-    }
-
-    async buyItem(itemValue) {
-        const token = this.getSecurityToken();
-
-        if (itemValue === 'all_retail') {
-            const elements = ['kim', 'moc', 'thuy', 'hoa', 'tho', 'linh-phong-thao'];
-            for (const elem of elements) {
-                await this.callApi('buy-retail', { element: elem, qty: 1, security_token: token });
-                await new Promise(r => setTimeout(r, 300));
-            }
-            alert('Đã mua xong tất cả Linh Dược lẻ!');
-            return;
-        }
-
-        if (itemValue === 'all_bundles') {
-            const bundleKeys = ['bundle_ld_tho', 'bundle_ld_s', 'bundle_ld_m', 'bundle_ld_l'];
-            for (const key of bundleKeys) {
-                await this.callApi('buy-bundle', { bundle_key: key, security_token: token });
-                await new Promise(r => setTimeout(r, 300));
-            }
-            alert('Đã mua xong tất cả Gói Túi!');
-            return;
-        }
-
-        if (itemValue.startsWith('bundle_')) {
-            const res = await this.callApi('buy-bundle', { bundle_key: itemValue, security_token: token });
-            if (res && (res.success || res.status === 'success')) alert('Mua gói thành công!');
-            return;
-        }
-
-        const res = await this.callApi('buy-retail', { element: itemValue, qty: 1, security_token: token });
-        if (res && (res.success || res.status === 'success')) alert(`Mua thành công 1x ${itemValue}!`);
-    }
-}
-
-window.autoMuaLinhDuoc = new AutoMuaLinhDuoc();
-
-// ==================== TẠO UI KHU VỰC MENU ====================
-function renderLinhDuocMenuUI() {
-    if (document.getElementById('row-mua-linh-duoc-select')) return;
-
-    // Tìm dòng 'Hoạt Động Ngày' hoặc 'Mua Đan Dược' trong menu Krizk
-    const allElements = Array.from(document.querySelectorAll('div, span, button'));
-    const target = allElements.find(el => el.children.length === 0 && (el.textContent.includes('Hoạt Động Ngày') || el.textContent.includes('Mua Đan Dược')));
-
-    if (!target) return;
-
-    // Leo lên thẻ row container ngoài cùng
-    let row = target;
-    while (row.parentElement && !row.parentElement.classList.contains('task-list') && row.parentElement.children.length < 5) {
-        row = row.parentElement;
-    }
-
-    const container = row.parentElement || row.parentNode;
-    if (!container) return;
-
-    const div = document.createElement('div');
-    div.id = 'row-mua-linh-duoc-select';
-    div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin-top: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;';
-    
-    div.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 14px;">🌿</span>
-            <span style="font-weight: 500; color: #e0e0e0; font-size: 12px;">Mua Linh Dược</span>
-        </div>
-        <div style="display: flex; gap: 6px; align-items: center;">
-            <select id="select-linh-duoc-opt" style="background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 3px 6px; border-radius: 4px; font-size: 11px; outline: none; cursor: pointer;">
-                <optgroup label="-- Tất Cả --">
-                    <option value="all_retail">Tất Cả Dược Lẻ</option>
-                    <option value="all_bundles">Tất Cả Gói Túi</option>
-                </optgroup>
-                <optgroup label="-- Nguyên Liệu Lẻ --">
-                    <option value="kim">Kim Linh Quả</option>
-                    <option value="moc" selected>Mộc Linh Quả</option>
-                    <option value="thuy">Thủy Linh Quả</option>
-                    <option value="hoa">Hỏa Linh Quả</option>
-                    <option value="tho">Thổ Linh Quả</option>
-                    <option value="linh-phong-thao">Linh Phong Thảo</option>
-                </optgroup>
-                <optgroup label="-- Gói Túi --">
-                    <option value="bundle_ld_tho">Túi Linh Dược Thổ</option>
-                    <option value="bundle_ld_s">Túi Linh Dược Tiểu</option>
-                    <option value="bundle_ld_m">Túi Linh Dược Trung</option>
-                    <option value="bundle_ld_l">Túi Linh Dược Đại</option>
-                </optgroup>
-            </select>
-            <button id="btn-exec-buy-duoc" style="background: #6f42c1; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">Mua</button>
-        </div>
-    `;
-
-    container.appendChild(div);
-
-    document.getElementById('btn-exec-buy-duoc').addEventListener('click', async () => {
-        const selectEl = document.getElementById('select-linh-duoc-opt');
-        const btn = document.getElementById('btn-exec-buy-duoc');
-        btn.textContent = '...';
-        btn.style.opacity = '0.6';
-
-        await window.autoMuaLinhDuoc.buyItem(selectEl.value);
-
-        btn.textContent = 'Mua';
-        btn.style.opacity = '1';
-    });
-}
-
-setInterval(renderLinhDuocMenuUI, 1000);
