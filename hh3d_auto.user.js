@@ -4571,19 +4571,28 @@ class BiCanh {
                     'tho':  { khac: 'thuy', bi_khac: 'moc' },
                 };
 
-                function isOptimal(el) {
-                    return rules[el].khac === bossElement;
-                }
-                function isNeutral(el) {
-                    return rules[el].bi_khac !== bossElement;
-                }
+                // Hàm chuẩn hóa chuỗi về chữ viết thường, xóa khoảng trắng
+    const normalize = (val) => (val && typeof val === 'string') ? val.trim().toLowerCase() : '';
 
-                while (changeAttempts < MAX_ATTEMPTS) {
-                    changeAttempts++;
+    // Hàm kiểm tra hệ tối ưu (Khắc hệ Boss) - Đã bọc kiểm tra an toàn
+    function isOptimal(el) {
+        const key = normalize(el);
+        const bossKey = normalize(bossElement);
+        return (rules[key] && rules[key].khac === bossKey);
+    }
 
-                    const currentlyOptimal = isOptimal(myElement);
-                    const currentlyNeutral = isNeutral(myElement);
+    // Hàm kiểm tra hệ hòa/bình thường (Không bị Boss khắc) - Đã bọc kiểm tra an toàn
+    function isNeutral(el) {
+        const key = normalize(el);
+        const bossKey = normalize(bossElement);
+        return (rules[key] && rules[key].bi_khac !== bossKey);
+    }
 
+    while (changeAttempts < MAX_ATTEMPTS) {
+        changeAttempts++;
+
+        const currentlyOptimal = isOptimal(myElement);
+        const currentlyNeutral = isNeutral(myElement);
                     // 🔎 Kiểm tra trước khi đổi
                     if (!currentlyNeutral) {
                         console.log(`${this.logPrefix} ❌ Đang bị boss khắc chế -> phải đổi.`);
