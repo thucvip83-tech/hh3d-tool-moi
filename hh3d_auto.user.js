@@ -4575,18 +4575,19 @@ class BiCanh {
     const normalize = (val) => (val && typeof val === 'string') ? val.trim().toLowerCase() : '';
 
     // Hàm kiểm tra hệ tối ưu (Khắc hệ Boss) - Đã bọc kiểm tra an toàn
-    function isOptimal(el) {
-        const key = normalize(el);
-        const bossKey = normalize(bossElement);
-        return (rules[key] && rules[key].khac === bossKey);
-    }
+  function isOptimal(el) {
+    const key = normalize(el);
+    const bossKey = normalize(bossElement);
+    if (!key || !rules[key]) return false;
+    return rules[key].khac === bossKey;
+}
 
-    // Hàm kiểm tra hệ hòa/bình thường (Không bị Boss khắc) - Đã bọc kiểm tra an toàn
-    function isNeutral(el) {
-        const key = normalize(el);
-        const bossKey = normalize(bossElement);
-        return (rules[key] && rules[key].bi_khac !== bossKey);
-    }
+function isNeutral(el) {
+    const key = normalize(el);
+    const bossKey = normalize(bossElement);
+    if (!key || !rules[key]) return false;
+    return rules[key].bi_khac !== bossKey;
+}
 
     while (changeAttempts < MAX_ATTEMPTS) {
         changeAttempts++;
