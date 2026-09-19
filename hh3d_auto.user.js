@@ -4,8 +4,8 @@
     // @version       5.9.9
     // @description   Auto  HH3D
     // @author        Cre: [Unknown] - Edited by VM
-    // @include       *://hoathinh3d.cv*/*
-    // @exclude       *://hoathinh3d.cv/khoang-mach*
+    // @include       *://hoathinh3d.de*/*
+    // @exclude       *://hoathinh3d.de/khoang-mach*
     // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
     // @run-at        document-start
     // @grant         unsafeWindow
@@ -11284,7 +11284,7 @@ class HoatDongNgay {
         // Nếu không ở trang Tụ Bảo Các, tự động chuyển hướng người dùng
         if (!window.location.href.includes('tu-bao-cac-hh3d')) {
             if (confirm('Bạn cần ở trang Tụ Bảo Các mới mua được. Bấm OK để chuyển trang ngay!')) {
-                window.location.href = 'https://hoathinh3d.cv/tu-bao-cac-hh3d/?tab=dan-cac#xuat-linh-duoc';
+                window.location.href = 'https://hoathinh3d.de/tu-bao-cac-hh3d/?tab=dan-cac#xuat-linh-duoc';
             }
             return;
         }
