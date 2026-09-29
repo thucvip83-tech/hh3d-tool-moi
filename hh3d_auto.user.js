@@ -4558,42 +4558,43 @@ class BiCanh {
             * @param {string} nonce - Nonce bảo mật.
             * @returns {Promise<string|null>} Nguyên tố mới nếu đổi thành công, ngược lại là null.
             */
-            async changeElementUntilSuitable(currentElement, bossElement, maximizeDamage, nonce) {
-                let myElement = currentElement;
-                let changeAttempts = 0;
-                const MAX_ATTEMPTS = 5;
+    async changeElementUntilSuitable(currentElement, bossElement, maximizeDamage, nonce) {
+    let myElement = currentElement;
+    let changeAttempts = 0;
+    const MAX_ATTEMPTS = 5;
 
-                const rules = {
-                    'kim':  { khac: 'moc',  bi_khac: 'hoa' },
-                    'moc':  { khac: 'tho',  bi_khac: 'kim' },
-                    'thuy': { khac: 'hoa',  bi_khac: 'tho' },
-                    'hoa':  { khac: 'kim',  bi_khac: 'thuy' },
-                    'tho':  { khac: 'thuy', bi_khac: 'moc' },
-                };
+    const rules = {
+        'kim':  { khac: 'moc',  bi_khac: 'hoa' },
+        'moc':  { khac: 'tho',  bi_khac: 'kim' },
+        'thuy': { khac: 'hoa',  bi_khac: 'tho' },
+        'hoa':  { khac: 'kim',  bi_khac: 'thuy' },
+        'tho':  { khac: 'thuy', bi_khac: 'moc' },
+    };
 
-                // Hàm chuẩn hóa chuỗi về chữ viết thường, xóa khoảng trắng
+    // Hàm chuẩn hóa chuỗi về chữ viết thường, xóa khoảng trắng
     const normalize = (val) => (val && typeof val === 'string') ? val.trim().toLowerCase() : '';
 
     // Hàm kiểm tra hệ tối ưu (Khắc hệ Boss) - Đã bọc kiểm tra an toàn
-  function isOptimal(el) {
-    const key = normalize(el);
-    const bossKey = normalize(bossElement);
-    if (!key || !rules[key]) return false;
-    return rules[key].khac === bossKey;
-}
+    function isOptimal(el) {
+        const key = normalize(el);
+        const bossKey = normalize(bossElement);
+        return (rules[key] && rules[key].khac === bossKey);
+    }
 
-function isNeutral(el) {
-    const key = normalize(el);
-    const bossKey = normalize(bossElement);
-    if (!key || !rules[key]) return false;
-    return rules[key].bi_khac !== bossKey;
-}
+    // Hàm kiểm tra hệ hòa/bình thường (Không bị Boss khắc) - Đã bọc kiểm tra an toàn
+    function isNeutral(el) {
+        const key = normalize(el);
+        const bossKey = normalize(bossElement);
+        return (rules[key] && rules[key].bi_khac !== bossKey);
+    }
 
     while (changeAttempts < MAX_ATTEMPTS) {
         changeAttempts++;
 
         const currentlyOptimal = isOptimal(myElement);
         const currentlyNeutral = isNeutral(myElement);
+
+        
                     // 🔎 Kiểm tra trước khi đổi
                     if (!currentlyNeutral) {
                         console.log(`${this.logPrefix} ❌ Đang bị boss khắc chế -> phải đổi.`);
