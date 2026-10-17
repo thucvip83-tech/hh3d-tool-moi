@@ -1,7 +1,7 @@
     // ==UserScript==
     // @name          HH3D Auto - Edited by giachu
     // @namespace     hh3d-tool-giachu
-    // @version       6.0.1
+    // @version       6.0.2
     // @description   Auto HH3D
     // @author        Cre: [Unknown] - Edited by giachu
     // @include       *://hoathinh3d.*/*
@@ -1080,6 +1080,7 @@ class TaskTracker {
                     <select class="quest-select muadan-count-select" title="Số đan Tông Môn">${opts}</select>
                     <button class="quest-action-btn muadan-tong-btn" data-task="muadan">🍱 Tông</button>
                     <button class="quest-action-btn muadan-tubao-btn" data-task="muadan" style="background:${tubao?'linear-gradient(135deg,#f093fb,#f5576c)':'#555'}">🧄 Tụ Bảo</button>
+                    <button class="quest-action-btn muadan-dancac-btn" data-task="muadan" title="Mua Gói Linh Dược Đan Các (Thiên Cơ Các)" style="background:linear-gradient(135deg,#f59e0b,#d97706)">💊 Đan Các</button>
                 `;
             }
 
@@ -1727,6 +1728,24 @@ function attachQuestButtonHandlers() {
             } finally {
                 muadanTubaoBtn.disabled = false;
                 muadanTubaoBtn.textContent = '🧄 Tụ Bảo';
+            }
+        });
+    }
+
+    const muadanDancacBtn = document.querySelector('.muadan-dancac-btn');
+    if (muadanDancacBtn) {
+        muadanDancacBtn.addEventListener('click', async () => {
+            muadanDancacBtn.disabled = true;
+            muadanDancacBtn.textContent = '⏳';
+            try {
+                await dancac.autoBuyDailyBundle();
+                await loadHH3DProfile();
+            } catch(e) {
+                console.error('[Mua Đan Các]', e);
+                showNotification('Lỗi khi mua Đan Các', 'error');
+            } finally {
+                muadanDancacBtn.disabled = false;
+                muadanDancacBtn.textContent = '💊 Đan Các';
             }
         });
     }
@@ -5197,6 +5216,102 @@ class DanTuBaoShop {
     }
 }
 //================== Pháp Tướng/ kHẮC TRẬN VĂN=====================//
+
+
+
+// ===============================================
+// ĐAN CÁC (THIÊN CƠ CÁC)
+// ===============================================
+class DanCacShop {
+    constructor() {
+        this.weburl = weburl;
+        this.logPrefix = "[HH3D Đan Các]";
+    }
+
+    async getSecurityTokenForDanCac() {
+        try {
+            const res = await fetch(this.weburl + "tu-bao-cac-hh3d/?tab=thien-co-cac&t=" + Date.now(), { credentials: "include" });
+            const html = await res.text();
+            
+            const match = html.match(/"securityToken"\s*:\s*"([^"]+)"/);
+            if (match && match[1]) {
+                return match[1];
+            }
+            return (typeof hh3dData !== 'undefined' && hh3dData.securityToken) ? hh3dData.securityToken : await getSecurityToken();
+        } catch (e) {
+            console.error(this.logPrefix, "Lỗi lấy token Đan Các:", e);
+            return null;
+        }
+    }
+
+    async getNonce() {
+        return await getNonce();
+    }
+
+    async buyBundle(bundleKey) {
+        try {
+            const securityToken = await this.getSecurityTokenForDanCac();
+            const nonce = await this.getNonce();
+
+            if (!securityToken) {
+                showNotification("❌ Không lấy được securityToken cho Đan Các", "error");
+                return { success: false };
+            }
+
+            const response = await fetch(this.weburl + "wp-json/thien-co-cac/v1/buy-bundle", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-WP-Nonce": nonce || ""
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    bundle_key: bundleKey,
+                    security_token: securityToken
+                })
+            });
+
+            const res = await response.json();
+            const msg = res?.message || res?.data?.message || "Đã xử lý";
+
+            if (res.ok || res.success) {
+                showNotification(`✅ ${msg}`, "success");
+            } else {
+                showNotification(`⚠️ ${msg}`, "warn");
+            }
+            return res;
+        } catch (err) {
+            showNotification(`❌ Lỗi mua Đan Các: ${err.message}`, "error");
+            return { success: false };
+        }
+    }
+
+    async autoBuyDailyBundle() {
+        try {
+            const securityToken = await this.getSecurityTokenForDanCac();
+            const res = await fetch(this.weburl + "wp-json/thien-co-cac/v1/get-data", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ security_token: securityToken })
+            });
+            const data = await res.json();
+
+            const dailyBundleKey = data?.data?.daily_featured?.bundle_key;
+            if (dailyBundleKey) {
+                showNotification(`📌 Gói ưu đãi ngày: ${data.data.daily_featured.label}`, "info");
+                await this.buyBundle(dailyBundleKey);
+            } else {
+                showNotification("⚠️ Không tìm thấy gói ưu đãi ngày hôm nay", "warn");
+            }
+        } catch (e) {
+            console.error(this.logPrefix, e);
+            showNotification("❌ Lỗi quét gói ưu đãi Đan Các", "error");
+        }
+    }
+}
+
+const dancac = new DanCacShop();
 
 class KhacTranVan {
     constructor() {
