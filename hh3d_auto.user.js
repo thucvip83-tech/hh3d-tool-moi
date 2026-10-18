@@ -1,7 +1,7 @@
     // ==UserScript==
     // @name          HH3D Auto - Edited by giachu
     // @namespace     hh3d-tool-giachu
-    // @version       6.0.2
+    // @version       6.0.3
     // @description   Auto HH3D
     // @author        Cre: [Unknown] - Edited by giachu
     // @include       *://hoathinh3d.*/*
@@ -100,48 +100,47 @@
             let hh3dData = {};
             
             // ⭐ BƯỚC 1: Lấy hh3dData mặc định từ HTML
-            const hh3dMatch = html.match(/var\s+hh3dData\s*=\s*({[^}]+})/);
+            const hh3dMatch = html.match(/(?:var|let|const)\s+hh3dData\s*=\s*({[^;]+});/);
             if (hh3dMatch) {
               try {
                 hh3dData = JSON.parse(hh3dMatch[1]);
-                //console.log('✅ Đã parse hh3dData mặc định:', Object.keys(hh3dData));
               } catch (e) {
-                console.log('⚠️ Không thể parse hh3dData từ HTML:', e.message);
+                const flatMatch = html.match(/(?:var|let|const)\s+hh3dData\s*=\s*({[^}]+})/);
+                if (flatMatch) {
+                  try { hh3dData = JSON.parse(flatMatch[1]); } catch (e2) {}
+                }
               }
-            } else {
-              console.log('⚠️ Không tìm thấy hh3dData trong HTML');
             }
+
+            // Luôn lấy boss_attack_token trước khi có bất kỳ lệnh return sớm nào
+            const m = html.match(/(?:var|let|const|window\.)\s*boss_attack_token\s*=\s*['"]([a-f0-9]+)['"]/i)
+                   || html.match(/["']?boss_attack_token["']?\s*[:=]\s*['"]([a-f0-9]+)['"]/i);
+            hh3dData.attackToken = m ? m[1] : null;
             
             // ⭐ BƯỚC 2: Lấy k và d từ HTML nếu không được truyền vào
             if (!k || !d) {
-              // Tìm script chứa k và d
-              // Pattern: var k="...",d="...";
-              const scriptMatch = html.match(/var\s+k\s*=\s*"([^"]+)"\s*,\s*d\s*=\s*"([^"]+)"/);
+              const scriptMatch = html.match(/(?:var|let|const)\s+k\s*=\s*['"]([^'"]+)['"]\s*,\s*d\s*=\s*['"]([^'"]+)['"]/);
               if (scriptMatch) {
                 k = k || scriptMatch[1];
                 d = d || scriptMatch[2];
-                // console.log('✅ Đã lấy k và d từ HTML');
               } else {
-                // console.log('⚠️ Không tìm thấy k và d trong HTML');
-                return hh3dData; // Trả về hh3dData mặc định
+                if (!hh3dData.act) {
+                  const globalAct = (typeof unsafeWindow !== 'undefined' && unsafeWindow.hh3dData?.act)
+                    ? unsafeWindow.hh3dData.act
+                    : (typeof window !== 'undefined' && window.hh3dData?.act ? window.hh3dData.act : null);
+                  if (globalAct) hh3dData.act = globalAct;
+                }
+                return hh3dData;
               }
             }
             
             // ⭐ BƯỚC 3: Decode encrypted data
             if (k && d) {
               try {
-                // Base64 decode (normalize URL-safe base64 → standard base64, then add padding)
                 const b64 = d.replace(/\\/g, '').replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
                 const b64Padded = b64.padEnd(b64.length + (4 - b64.length % 4) % 4, '=');
-                // Debug: log invalid chars
-                const invalidChars = b64Padded.replace(/[A-Za-z0-9+/=]/g, '');
-                // if (invalidChars.length > 0) {
-                //   console.log('⚠️ d có ký tự không hợp lệ (charCode):', [...invalidChars].map(c => c.charCodeAt(0)));
-                // }
-                // console.log('🔍 d (first 80):', d.substring(0, 80), '| len:', d.length);
                 const decodedBytes = atob(b64Padded).split('').map(c => c.charCodeAt(0));
                 
-                // XOR với key
                 let result = '';
                 for (let i = 0; i < decodedBytes.length; i++) {
                   result += String.fromCharCode(
@@ -149,17 +148,19 @@
                   );
                 }
                 
-                // Parse JSON
                 const actData = JSON.parse(result);
                 hh3dData.act = actData;
-                
-                // console.log('✅ Đã decode và gán hh3dData.act thành công');
               } catch (e) {
                 console.log('❌ Lỗi khi decode data:', e.message);
               }
             }
-            const m = html.match(/var\s+boss_attack_token\s*=\s*['"]([a-f0-9]+)['"]/i);
-            hh3dData.attackToken = m ? m[1] : null; // dành cho hoang vực
+
+            if (!hh3dData.act) {
+              const globalAct = (typeof unsafeWindow !== 'undefined' && unsafeWindow.hh3dData?.act)
+                ? unsafeWindow.hh3dData.act
+                : (typeof window !== 'undefined' && window.hh3dData?.act ? window.hh3dData.act : null);
+              if (globalAct) hh3dData.act = globalAct;
+            }
             
             return hh3dData;
             
@@ -4450,10 +4451,14 @@ class BiCanh {
                     "referer": weburl + 'hoang-vuc?t=' + Math.random().toString(36).substring(2, 8),
                 };
                 this.attackToken = null;
+                this.securityToken = null;
+                this.hvData = null;
             }
 
             extractAttackToken(html) {
-                const m = html.match(/(?:var|let|const)\s+boss_attack_token\s*=\s*['"]([a-f0-9]+)['"]/i);
+                if (!html) return null;
+                const m = html.match(/(?:var|let|const|window\.)\s*boss_attack_token\s*=\s*['"]([a-f0-9]+)['"]/i)
+                       || html.match(/["']?boss_attack_token["']?\s*[:=]\s*['"]([a-f0-9]+)['"]/i);
                 return m ? m[1] : null;
             }
 
@@ -4489,7 +4494,10 @@ class BiCanh {
                         text = await response.text();
                     }
 
-                    this.attackToken = this.extractAttackToken(text);
+                    const extractedToken = this.extractAttackToken(text);
+                    if (extractedToken) {
+                        this.attackToken = extractedToken;
+                    }
                     console.log(`${this.logPrefix} 🔑 Lấy attack token: ${this.attackToken}`);
                     const element = this.extractElementFromHtml(text);
 
@@ -4526,15 +4534,13 @@ class BiCanh {
                 if (!rules[normalizedBossEl]) return Object.keys(rules);
 
                 if (maximizeDamage) {
-                    // Tối đa hóa sát thương: tìm nguyên tố khắc boss
                     for (const myElement in rules) {
                         if (rules[myElement].khac === normalizedBossEl) {
                             suitableElements.push(myElement);
-                            break; // Chỉ cần một nguyên tố khắc là đủ
+                            break;
                         }
                     }
                 } else {
-                    // Không bị giảm sát thương: tìm tất cả các nguyên tố không bị boss khắc
                     for (const myElement in rules) {
                         if (rules[myElement].bi_khac !== normalizedBossEl) {
                             suitableElements.push(myElement);
@@ -4548,18 +4554,30 @@ class BiCanh {
             * Nhận thưởng Hoang Vuc.
             */
             async claimHoangVucRewards(nonce) {
+                const actOpen = this.hvData?.act?.bossOpenChest || hData?.act?.bossOpenChest || 'claim_chest';
                 const payload = new URLSearchParams();
-                payload.append('action', (typeof hData !== 'undefined' && hData?.act?.bossOpenChest) ? hData.act.bossOpenChest : 'claim_chest');
+                payload.append('action', actOpen);
                 payload.append('nonce', nonce);
+                if (this.securityToken) payload.append('security_token', this.securityToken);
 
                 console.log(`${this.logPrefix} 🎁 Đang nhận thưởng...`);
-                const response = await fetch(this.adminAjaxUrl, {
+                let response = await fetch(this.adminAjaxUrl, {
                     method: 'POST',
                     headers: this.headers,
                     body: payload,
                     credentials: 'include'
                 });
-                const data = await response.json();
+                let data = await response.json();
+                if (!data.success && actOpen !== 'claim_chest') {
+                    const fallbackPayload = new URLSearchParams({ action: 'claim_chest', nonce });
+                    response = await fetch(this.adminAjaxUrl, {
+                        method: 'POST',
+                        headers: this.headers,
+                        body: fallbackPayload,
+                        credentials: 'include'
+                    });
+                    data = await response.json();
+                }
                 if (data.success) {
                     const rewards = data.total_rewards || {};
                     const message = `✅ Nhận thưởng thành công: +${rewards.tinh_thach || 0} Tinh Thạch, +${rewards.tu_vi || 0} Tu Vi.`;
@@ -4579,16 +4597,26 @@ class BiCanh {
             */
             async attackHoangVucBoss(bossId, nonce) {
                 const currentTime = Date.now();
-                const securityToken = (typeof hData !== 'undefined' && hData?.securityToken)
-                    ? hData.securityToken
-                    : await getSecurityToken(weburl + 'hoang-vuc?t=' + Math.random().toString(36).substring(2, 8));
+                // Nếu thiếu token riêng của phiên Hoang Vực thì mới tải lại
+                if (!this.securityToken || !this.attackToken || !this.hvData?.act?.bossAttack) {
+                    const refreshUrl = `${weburl}hoang-vuc?t=${currentTime}`;
+                    await this.getNonceAndRemainingAttacks(refreshUrl);
+                }
+
+                const securityToken = this.securityToken || hData?.securityToken || '';
+                const attackToken = this.attackToken || this.hvData?.attackToken || hData?.attackToken || '';
+                const actionCode = this.hvData?.act?.bossAttack || hData?.act?.bossAttack || 'attack_boss';
+                // Định dạng chuẩn từ F12: req_<9 ký tự ngẫu nhiên>_<timestamp>
+                const randPart = Math.random().toString(36).substring(2, 11).padEnd(9, 'x');
+                const requestId = `req_${randPart}_${currentTime}`;
+
                 const payload = new URLSearchParams();
-                payload.append('action', `${(typeof hData !== 'undefined' && hData?.act?.bossAttack) ? hData.act.bossAttack : 'attack_boss'}`);
-                payload.append('boss_id', bossId);
-                payload.append('security_token', securityToken || '');
+                payload.append('action', actionCode);
+                payload.append('boss_id', String(bossId));
+                payload.append('security_token', securityToken);
                 payload.append('nonce', nonce);
-                payload.append('attack_token', (typeof hData !== 'undefined' && hData?.attackToken) ? hData.attackToken : (this.attackToken || ''));
-                payload.append('request_id', `req_${Math.random().toString(36).substring(2, 8)}${currentTime}`);
+                payload.append('attack_token', attackToken);
+                payload.append('request_id', requestId);
                 console.log(`${this.logPrefix} 🛡️ Chuẩn bị tấn công boss ${bossId} với payload:`, Object.fromEntries(payload.entries()));
             
                 const response = await fetch(this.ajaxUrl, {
@@ -4601,9 +4629,21 @@ class BiCanh {
                 console.log(`${this.logPrefix} 📦 Response attackHoangVucBoss:`, data);
                 const errText = data?.data?.error || data?.data?.message || data?.message || '';
                 if (data.success) {
-                    const message = data?.data?.message || data?.message || JSON.stringify(data) || 'Tấn công thành công!';
+                    if (data?.data?.attack_token) {
+                        this.attackToken = data.data.attack_token;
+                    }
+                    let message = data?.data?.message || data?.message;
+                    if (!message && data?.data?.damage !== undefined) {
+                        const d = data.data;
+                        const dropTxt = d.drop_result?.item_name ? ` | 🎁 +${d.drop_result.quantity || 1} ${d.drop_result.item_name}` : '';
+                        message = `Hoang Vực: Gây <b>${d.damage}</b> sát thương (+${d.random_reward || 0} thưởng)${dropTxt}. Còn <b>${d.remaining_attacks ?? '?'}</b> lượt.`;
+                    }
+                    message = message || 'Tấn công Hoang Vực thành công!';
                     console.log(`${this.logPrefix} ✅ ${message}`);
                     showNotification(`✅ ${message}`, 'success');
+                    if (data?.data?.remaining_attacks !== undefined && Number(data.data.remaining_attacks) <= 0) {
+                        taskTracker.markTaskDone(accountId, 'hoangvuc');
+                    }
                     return true;
                 } else if (errText.includes('hết lượt tấn công')) {
                     taskTracker.markTaskDone(accountId, 'hoangvuc');
@@ -4618,11 +4658,6 @@ class BiCanh {
 
             /**
             * Lặp lại việc đổi nguyên tố cho đến khi đạt được nguyên tố phù hợp hoặc không thể đổi tiếp.
-            * @param {string} currentElement - Nguyên tố hiện tại của người dùng.
-            * @param {string} bossElement - Nguyên tố của boss.
-            * @param {boolean} maximizeDamage - Chiến lược tối đa hóa sát thương hay không.
-            * @param {string} nonce - Nonce bảo mật.
-            * @returns {Promise<string|null>} Nguyên tố mới nếu đổi thành công, ngược lại là null.
             */
             async changeElementUntilSuitable(currentElement, bossElement, maximizeDamage, nonce) {
                 let myElement = currentElement ? String(currentElement).toLowerCase().trim() : null;
@@ -4648,7 +4683,6 @@ class BiCanh {
                 while (changeAttempts < MAX_ATTEMPTS) {
                     changeAttempts++;
 
-                    // 🔎 Kiểm tra trước khi đổi (chỉ khi đã xác định được nguyên tố hiện tại)
                     if (myElement && rules[myElement]) {
                         const currentlyOptimal = isOptimal(myElement);
                         const currentlyNeutral = isNeutral(myElement);
@@ -4667,30 +4701,44 @@ class BiCanh {
                         }
                     }
 
-                    // 🔄 Tiến hành đổi element
-                    const actionName = (typeof hData !== 'undefined' && hData?.act?.bossCheckElem) ? hData.act.bossCheckElem : 'change_user_element';
-                    const payloadChange = new URLSearchParams({ action: actionName, nonce });
-                    if (typeof hData !== 'undefined' && hData?.securityToken) {
-                        payloadChange.append('security_token', hData.securityToken);
+                    // 🔄 Tiến hành đổi element (thử change_user_element trước, fallback sang bossCheckElem)
+                    let changeData = null;
+                    const candidateActions = ['change_user_element'];
+                    const actCheckElem = this.hvData?.act?.bossCheckElem || hData?.act?.bossCheckElem;
+                    if (actCheckElem && !candidateActions.includes(actCheckElem)) {
+                        candidateActions.push(actCheckElem);
                     }
-                    const changeData = await (await fetch(this.ajaxUrl, {
-                        method: 'POST',
-                        headers: this.headers,
-                        body: payloadChange,
-                        credentials: 'include'
-                    })).json();
 
-                    if (changeData.success && changeData.data?.new_element) {
+                    for (const actName of candidateActions) {
+                        const payloadChange = new URLSearchParams({ action: actName, nonce });
+                        if (this.securityToken) {
+                            payloadChange.append('security_token', this.securityToken);
+                        }
+                        try {
+                            const resp = await fetch(this.ajaxUrl, {
+                                method: 'POST',
+                                headers: this.headers,
+                                body: payloadChange,
+                                credentials: 'include'
+                            });
+                            const parsed = await resp.json();
+                            if (parsed && parsed.success && parsed.data?.new_element) {
+                                changeData = parsed;
+                                break;
+                            }
+                        } catch (e) {}
+                    }
+
+                    if (changeData && changeData.success && changeData.data?.new_element) {
                         myElement = String(changeData.data.new_element).toLowerCase().trim();
                         console.log(`${this.logPrefix} 🔄 Đổi lần ${changeAttempts} -> ${myElement}`);
                         await new Promise(resolve => setTimeout(resolve, 500));
                     } else {
-                        console.warn(`${this.logPrefix} ⚠️ Không thể đổi thêm nguyên tố:`, changeData?.data?.message || changeData?.message || 'Không xác định.');
+                        console.warn(`${this.logPrefix} ⚠️ Không thể đổi thêm nguyên tố, giữ nguyên tố hiện tại: ${myElement}`);
                         return myElement;
                     }
                 }
 
-                // ⏳ Hết lượt đổi nhưng vẫn chưa đạt chiến lược
                 console.log(`${this.logPrefix} ⚠️ Đã hết MAX_ATTEMPTS (${MAX_ATTEMPTS}). Chấp nhận nguyên tố cuối cùng: ${myElement}`);
                 return myElement;
             }
@@ -4703,7 +4751,13 @@ class BiCanh {
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const html = await response.text();
 
-                    hData = parseHh3dData(html);
+                    const parsedData = parseHh3dData(html);
+                    this.hvData = parsedData;
+                    hData = parsedData;
+
+                    const tokenMatch = html.match(/"securityToken"\s*:\s*"([^"]+)"/);
+                    this.securityToken = parsedData.securityToken || (tokenMatch ? tokenMatch[1] : null);
+                    this.attackToken = parsedData.attackToken || this.extractAttackToken(html) || null;
 
                     // Regex 1: lấy số lượt đánh
                     const attacksMatch = html.match(/Lượt đánh còn lại:\s*(\d+)/i);
@@ -4737,6 +4791,58 @@ class BiCanh {
                 }
             }
 
+            async fetchBossInfo(nonce) {
+                const candidateActions = [];
+                if (this.hvData?.act?.bossGet) candidateActions.push(this.hvData.act.bossGet);
+                if (!candidateActions.includes('get_boss')) candidateActions.push('get_boss');
+
+                let lastData = null;
+                for (const actName of candidateActions) {
+                    const payloadBossInfo = new URLSearchParams();
+                    payloadBossInfo.append('action', actName);
+                    payloadBossInfo.append('nonce', nonce);
+                    if (this.securityToken) {
+                        payloadBossInfo.append('security_token', this.securityToken);
+                    }
+                    const bossInfoResponse = await fetch(this.ajaxUrl, {
+                        method: 'POST',
+                        headers: this.headers,
+                        body: payloadBossInfo,
+                        credentials: 'include'
+                    });
+                    const bossInfoData = await bossInfoResponse.json();
+                    lastData = bossInfoData;
+                    if (bossInfoData && bossInfoData.success && bossInfoData.data) {
+                        return bossInfoData;
+                    }
+                }
+                return lastData;
+            }
+
+            async fetchNextAttackTime(nonce) {
+                const candidateActions = [];
+                if (this.hvData?.act?.bossTimer) candidateActions.push(this.hvData.act.bossTimer);
+                if (!candidateActions.includes('get_next_attack_time')) candidateActions.push('get_next_attack_time');
+
+                let lastData = null;
+                for (const actName of candidateActions) {
+                    const timePayload = new URLSearchParams();
+                    timePayload.append('action', actName);
+                    const timeResponse = await fetch(this.ajaxUrl, {
+                        method: 'POST',
+                        headers: this.headers,
+                        body: timePayload,
+                        credentials: 'include'
+                    });
+                    const nextAttackTime = await timeResponse.json();
+                    lastData = nextAttackTime;
+                    if (nextAttackTime && nextAttackTime.success) {
+                        return nextAttackTime;
+                    }
+                }
+                return lastData;
+            }
+
             /**
             * Hàm chính để tự động hóa Hoang Vực.
             */
@@ -4762,20 +4868,10 @@ class BiCanh {
                     return false;
                 }
 
-                const payloadBossInfo = new URLSearchParams();
-                payloadBossInfo.append('action', (typeof hData !== 'undefined' && hData?.act?.bossGet) ? hData.act.bossGet : 'get_boss');
-                payloadBossInfo.append('nonce', nonce);
-
                 try {
-                    const bossInfoResponse = await fetch(this.ajaxUrl, {
-                        method: 'POST',
-                        headers: this.headers,
-                        body: payloadBossInfo,
-                        credentials: 'include'
-                    });
-                    const bossInfoData = await bossInfoResponse.json();
+                    const bossInfoData = await this.fetchBossInfo(nonce);
 
-                    if (bossInfoData.success && bossInfoData.data) {
+                    if (bossInfoData && bossInfoData.success && bossInfoData.data) {
                         const boss = bossInfoData.data;
 
                         if (boss.has_pending_rewards) {
@@ -4790,7 +4886,6 @@ class BiCanh {
                         const bossElement = boss.element ? String(boss.element).toLowerCase().trim() : null;
 
                         if (bossElement) {
-                            // Lấy danh sách các nguyên tố phù hợp
                             const suitableElements = this.getTargetElement(bossElement, maximizeDamage);
 
                             if (!myElement || !suitableElements.includes(myElement)) {
@@ -4808,20 +4903,11 @@ class BiCanh {
                             }
                         }
 
-                        // Cập nhật thời gian đánh tiếp theo
+                        // Kiểm tra thời gian đánh tiếp theo
                         await new Promise(resolve => setTimeout(resolve, 500));
-                        const timePayload = new URLSearchParams();
-                        timePayload.append('action', (typeof hData !== 'undefined' && hData?.act?.bossTimer) ? hData.act.bossTimer : 'get_next_attack_time');
-                        const timeResponse = await fetch(this.ajaxUrl, {
-                            method: 'POST',
-                            headers: this.headers,
-                            body: timePayload,
-                            credentials: 'include'
-                        });
-                        const nextAttackTime = await timeResponse.json();
+                        const nextAttackTime = await this.fetchNextAttackTime(nonce);
 
-                        if (nextAttackTime.success && Date.now() >= nextAttackTime.data) {
-                            // Thực hiện tấn công boss Hoang Vực, nếu thành công và còn 1 lượt tấn công thì đánh dấu nhiệm vụ hoàn thành
+                        if (nextAttackTime && nextAttackTime.success && Date.now() >= nextAttackTime.data) {
                             await new Promise(resolve => setTimeout(resolve, 500));
                             if (await this.attackHoangVucBoss(boss.id, nonce)) {
                                 taskTracker.adjustTaskTime(accountId, 'hoangvuc', timePlus('15:02'));
@@ -4829,7 +4915,7 @@ class BiCanh {
                                     taskTracker.markTaskDone(accountId, 'hoangvuc');
                                 }
                             }
-                        } else if (nextAttackTime.data) {
+                        } else if (nextAttackTime && nextAttackTime.data) {
                             const remainingTime = Math.max(nextAttackTime.data - Date.now(), 0);
                             const remainingSeconds = Math.floor(remainingTime / 1000);
                             const minutes = Math.floor(remainingSeconds / 60);
@@ -4839,7 +4925,7 @@ class BiCanh {
                             taskTracker.adjustTaskTime(accountId, 'hoangvuc', nextAttackTime.data);
                         }
                     } else {
-                        const errorMessage = bossInfoData.message || 'Lỗi không xác định khi lấy thông tin boss.';
+                        const errorMessage = bossInfoData?.data?.message || bossInfoData?.message || 'Lỗi không xác định khi lấy thông tin boss.';
                         showNotification(errorMessage, 'error');
                     }
                 } catch (e) {
